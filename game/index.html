@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>Air Legislation Academy</title>
+<style>
+:root{--ink:#16233a;--card:#ffffffee;--accent:#2e86de;--gold:#f1c40f;--ok:#27ae60;--bad:#e74c3c}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#79c4ff;font-family:"Trebuchet MS","Segoe UI",system-ui,sans-serif;color:var(--ink);user-select:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+.hidden{display:none!important}
+button{font:inherit;cursor:pointer}
+.btn{background:var(--accent);color:#fff;border:0;border-bottom:4px solid #1b5fa3;border-radius:10px;padding:10px 18px;font-weight:700;font-size:16px}
+.btn:hover{filter:brightness(1.08)}.btn:active{transform:translateY(2px);border-bottom-width:2px}
+.btn.alt{background:#95a5a6;border-bottom-color:#6c7a7b}
+.btn.go{background:var(--ok);border-bottom-color:#1a7a44}
+.btn:disabled{opacity:.45;cursor:default}
+/* HUD */
+#hud{position:fixed;inset:0;pointer-events:none}
+.pill{background:#10203bcc;color:#fff;border-radius:12px;padding:8px 12px;backdrop-filter:blur(4px)}
+#stat{position:absolute;left:12px;top:12px;min-width:230px}
+#stat b{font-size:15px}#rank{color:var(--gold);font-weight:700}
+#xpbar{height:8px;background:#ffffff33;border-radius:6px;margin-top:6px;overflow:hidden}#xpfill{height:100%;background:linear-gradient(90deg,#f1c40f,#e67e22);width:0}
+#quests{position:absolute;right:12px;top:12px;width:250px;font-size:13px}
+#quests h4{margin:0 0 6px;font-size:14px;color:var(--gold)}
+#quests div.q{display:flex;gap:6px;align-items:center;padding:2px 0;opacity:.9}
+#quests div.q.done{color:#7dffa8}#quests div.q.next{color:#fff;font-weight:700}
+#quests .dot{width:10px;height:10px;border-radius:50%;flex:none;border:2px solid #fff8}
+#mini{position:absolute;right:12px;bottom:12px;width:160px;height:160px;border-radius:50%;border:3px solid #fff;background:#10203b99}
+#prompt{position:absolute;left:50%;bottom:90px;transform:translateX(-50%);font-size:18px;font-weight:700;padding:10px 18px;text-align:center}
+#hint{position:absolute;left:12px;bottom:12px;font-size:12.5px;line-height:1.5;opacity:.92}
+#toast{position:absolute;left:50%;top:80px;transform:translateX(-50%);max-width:min(560px,92vw);text-align:center;font-size:16px;transition:opacity .3s;opacity:0}
+#toast.show{opacity:1}
+#obj{position:absolute;left:50%;top:12px;transform:translateX(-50%);max-width:min(620px,60vw);text-align:center;font-size:15px;font-weight:700}
+#touch{position:absolute;inset:0;pointer-events:none}
+#stick{position:absolute;left:26px;bottom:60px;width:120px;height:120px;border-radius:50%;background:#ffffff33;border:2px solid #fff8;pointer-events:auto;touch-action:none}
+#knob{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:#ffffffcc}
+.tbtn{position:absolute;width:64px;height:64px;border-radius:50%;background:#10203bcc;color:#fff;border:2px solid #fff;font-weight:800;pointer-events:auto;touch-action:none}
+/* panels */
+#overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#0a1730a0;z-index:10;padding:12px}
+#panel{background:var(--card);border-radius:18px;border:3px solid #fff;box-shadow:0 14px 50px #0008;width:min(760px,100%);max-height:92vh;overflow:auto;padding:22px 26px;animation:pop .22s ease-out}
+@keyframes pop{from{transform:scale(.92);opacity:0}to{transform:none;opacity:1}}
+#panel h2{margin:0 0 4px;font-size:25px}#panel h3{margin:0 0 10px;font-size:19px}
+.tag{display:inline-block;font-size:12px;font-weight:700;background:#e8f1fb;color:#1b5fa3;border-radius:20px;padding:2px 10px;margin-bottom:8px}
+.npc{display:flex;gap:12px;align-items:flex-start;margin:10px 0 14px}
+.npc .face{font-size:40px;line-height:1}.npc .say{background:#eef4fb;border-radius:12px;padding:10px 14px;font-size:16px}
+.card{background:#f4f8fd;border-radius:14px;padding:16px 18px;border-left:8px solid var(--zc,#2e86de);min-height:170px;font-size:17px;line-height:1.5}
+.card .big{font-size:42px}.card ul,.card ol{margin:6px 0 0;padding-left:22px}.card li{margin:3px 0}
+.card .src{float:right;font-size:12px;color:#7a8aa3;font-weight:700}
+.row{display:flex;gap:10px;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap}
+.dots{display:flex;gap:6px}.dots i{width:10px;height:10px;border-radius:50%;background:#c9d6e6}.dots i.on{background:var(--zc,#2e86de)}
+.opts{display:grid;gap:10px;margin-top:12px}
+.opt{background:#fff;border:2px solid #cfdcec;border-radius:12px;padding:12px 14px;text-align:left;font-size:16px;font-weight:600;color:var(--ink);border-bottom-width:4px}
+.opt:hover:not(:disabled){border-color:var(--accent);background:#f1f8ff}
+.opt.ok{background:#d8f5e3;border-color:var(--ok)}.opt.bad{background:#fde1de;border-color:var(--bad);opacity:.7}
+.fb{margin-top:12px;padding:10px 14px;border-radius:10px;font-size:15px}.fb.ok{background:#d8f5e3}.fb.bad{background:#fde1de}
+.slots{display:grid;gap:6px;margin:10px 0}.slot{border:2px dashed #b9c8da;border-radius:10px;padding:8px 12px;min-height:40px;font-weight:600;display:flex;gap:8px}
+.slot.f{border-style:solid;border-color:var(--ok);background:#d8f5e3}.slot span{opacity:.5}
+.shake{animation:sh .3s}@keyframes sh{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.bk{display:grid;gap:10px;margin-top:12px}
+.bar{height:10px;background:#dfe8f2;border-radius:6px;overflow:hidden;margin:8px 0}.bar i{display:block;height:100%;background:var(--zc,#2e86de)}
+.big-sc{font-size:56px;font-weight:800;text-align:center}
+.cert{border:8px double #b8860b;background:#fffdf3;padding:24px;text-align:center;border-radius:6px}
+.cert h1{margin:4px 0;font-family:Georgia,serif;font-size:30px;color:#7a5a00}.cert .nm{font-size:34px;font-family:Georgia,serif;font-style:italic;border-bottom:2px solid #b8860b;display:inline-block;padding:0 20px;margin:10px 0}
+#title{position:fixed;inset:0;z-index:20;display:flex;align-items:center;justify-content:center;background:linear-gradient(180deg,#0b1d3acc,#1e5aa8cc);padding:14px}
+#title .box{background:#fff;border-radius:20px;padding:26px 30px;width:min(640px,100%);text-align:center;max-height:96vh;overflow:auto}
+#title h1{margin:0;font-size:34px}#title .sub{color:#4b5c78;margin:4px 0 14px}
+#title input{font:inherit;font-size:18px;padding:10px 14px;border:2px solid #cfdcec;border-radius:10px;width:80%;text-align:center;margin:8px 0}
+#title ul{text-align:left;margin:10px auto;max-width:480px;font-size:14px;line-height:1.55}
+#fb-hit{position:fixed;inset:0;pointer-events:none;z-index:5;opacity:0;background:radial-gradient(transparent 50%,#e74c3c99)}
+@media(max-width:700px){#quests{display:none}#mini{width:110px;height:110px;bottom:150px}#hint{display:none}#obj{max-width:90vw;top:70px;font-size:13px}#stat{min-width:0;font-size:12px}#panel{padding:16px}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="fb-hit"></div>
+<div id="hud" class="hidden">
+  <div id="stat" class="pill"><b id="pname">Cadet</b> · <span id="rank"></span><div style="font-size:12px;margin-top:2px"><span id="xptxt"></span> · ⭐ <span id="startxt"></span></div><div id="xpbar"><div id="xpfill"></div></div></div>
+  <div id="obj" class="pill"></div>
+  <div id="quests" class="pill"><h4>🎓 Training Programme</h4><div id="qlist"></div></div>
+  <canvas id="mini" width="320" height="320"></canvas>
+  <div id="prompt" class="pill hidden"></div>
+  <div id="toast" class="pill"></div>
+  <div id="hint" class="pill">WASD / Arrows: move · Shift: run · Space: jump<br>Drag mouse: look · E: talk / interact</div>
+  <div id="touch" class="hidden">
+    <div id="stick"><div id="knob"></div></div>
+    <button class="tbtn" id="bJump" style="right:30px;bottom:200px">JUMP</button>
+    <button class="tbtn" id="bAct" style="right:104px;bottom:130px;background:#27ae60cc">E</button>
+  </div>
+</div>
+<div id="overlay" class="hidden"><div id="panel"></div></div>
+<div id="title">
+  <div class="box">
+    <div style="font-size:54px">✈️🛠️</div>
+    <h1>Air Legislation Academy</h1>
+    <div class="sub">ME2804 · A 3D aerospace-engineer adventure</div>
+    <div>Roam the academy island, talk to the experts, learn the rules of the sky and earn your <b>licence</b>.</div>
+    <input id="nameIn" maxlength="18" placeholder="Enter your engineer name" autocomplete="off">
+    <ul>
+      <li><b>9 training zones</b> – Chicago Convention · ICAO · How ICAO works · Contracting States · Air Navigation Act · SAR &amp; Regulations · ANO · UAS in Singapore</li>
+      <li>Read each expert's briefing, then clear the challenges: timelines, quizzes, a <b>flight challenge</b> and a <b>warehouse dash</b></li>
+      <li>Collect ⭐ knowledge stars, then pass the Chief Examiner's final exam</li>
+    </ul>
+    <button class="btn go" id="startBtn" style="font-size:20px;padding:12px 30px">▶ Start Training</button>
+    <button class="btn alt" id="resetBtn" style="margin-left:8px">Reset progress</button>
+    <div style="margin-top:12px;font-size:12px;color:#6b7b95">Desktop: WASD + mouse · Touch: on-screen stick</div>
+  </div>
+</div>
+<script src="three.min.js"></script>
+<script src="content.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
