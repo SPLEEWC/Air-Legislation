@@ -1,6 +1,59 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><title>Air Legislation Academy</title>
+<html lang="en">
+<head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="refresh" content="0; url=game/index.html">
-<style>body{font-family:system-ui,sans-serif;display:grid;place-items:center;height:100vh;margin:0;background:#79c4ff}a{background:#27ae60;color:#fff;padding:14px 26px;border-radius:10px;font-size:20px;text-decoration:none;font-weight:700}</style>
-</head><body><a href="game/index.html">▶ Play Air Legislation Academy</a></body></html>
+<title>ME2804 Air Legislation – Learning Games</title>
+<style>
+:root{--bg:#0b1220;--panel:#111b2e;--line:#2a3a58;--ink:#e8eef8;--dim:#93a3bd;--amber:#ffb020;--sky:#4aa8ff}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:radial-gradient(ellipse at 50% -10%,#1d3257,#0b1220 60%);color:var(--ink);font-family:"Bahnschrift","DIN Alternate","Segoe UI",system-ui,-apple-system,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:40px 16px 48px}
+.eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--amber);font-weight:700}
+h1{margin:6px 0 8px;font-size:clamp(34px,7vw,60px);line-height:1;text-transform:uppercase;letter-spacing:.02em}
+.lead{color:var(--dim);font-size:17px;max-width:680px;line-height:1.5}
+.games{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:28px}
+.card{display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-top:5px solid var(--c);text-decoration:none;color:inherit;transition:transform .15s,border-color .15s}
+.card:hover,.card:focus-visible{transform:translateY(-4px);border-color:var(--c);outline:none}
+.art{height:170px;display:grid;place-items:center;font-size:70px;background:var(--a)}
+.body{padding:18px 20px 20px;display:flex;flex-direction:column;gap:8px;flex:1}
+.tag{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--c);font-weight:700}
+h2{margin:0;font-size:27px;text-transform:uppercase;letter-spacing:.03em}
+p{margin:0;color:var(--dim);line-height:1.5;font-size:15px}
+ul{margin:2px 0 0;padding-left:20px;color:var(--ink);font-size:14.5px;line-height:1.6}
+.play{margin-top:auto;align-self:flex-start;background:var(--c);color:#0b1220;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:11px 22px;margin-top:14px}
+.foot{display:flex;gap:16px;align-items:center;margin-top:30px;color:var(--dim);font-size:13.5px;flex-wrap:wrap}
+.foot img{background:#fff;border-radius:6px}
+</style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">ME2804 · Diploma in Aeronautical Engineering</div>
+  <h1>Air Legislation<br>Learning Games</h1>
+  <div class="lead">Two browser games built from the ME2804 lecture slides. No install – pick one and play.</div>
+  <div class="games">
+    <a class="card" href="game/index.html" style="--c:#4aa8ff;--a:linear-gradient(160deg,#79c4ff,#2e86de)">
+      <div class="art">✈️🛠️</div>
+      <div class="body">
+        <div class="tag">3D adventure · Slides 1–42</div>
+        <h2>Air Legislation Academy</h2>
+        <p>Roam a 3D academy island as an aerospace engineer, talk to the experts and clear their challenges.</p>
+        <ul><li>Chicago Convention &amp; ICAO</li><li>Air Navigation Act, ANO &amp; SAR</li><li>Unmanned aircraft in Singapore</li></ul>
+        <span class="play">▶ Play</span>
+      </div>
+    </a>
+    <a class="card" href="ops/index.html" style="--c:#ffb020;--a:linear-gradient(160deg,#1a2b4b,#0b1220)">
+      <div class="art">🎯🛩️</div>
+      <div class="body">
+        <div class="tag">Tactical shooter · Slides 43–63, 156–161</div>
+        <h2>9V Clearance</h2>
+        <p>Pick a specialist, gear up in the buy phase, then fight to the site showing the correct answer and certify it.</p>
+        <ul><li>Singapore Air Operator (AOC)</li><li>C of A &amp; Export C of A</li><li>Aircraft Noise Certificate</li><li>Aircraft Permit to Fly</li></ul>
+        <span class="play">▶ Play</span>
+      </div>
+    </a>
+  </div>
+  <div class="foot"><img src="game/qr.svg" alt="QR code for this page" width="92" height="92"><div>Scan to open this page on your phone.<br>9V Clearance plays best with keyboard and mouse; touch controls are included.</div></div>
+</main>
+</body>
+</html>
