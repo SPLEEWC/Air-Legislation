@@ -1,0 +1,248 @@
+/* PENCIL WHIP – open-world maintenance caper. Content from ME2804 Air Legislation slides 64-73, 99-104, 110, 116, 121, 125, 127.
+   Edit this file to change lessons, missions and questions. */
+const TOPICS = {
+  mx:   { name: 'Aircraft Maintenance', color: '#4fc3ff' },
+  crs:  { name: 'Certificate of Release to Service', color: '#7dff8a' },
+  cmr:  { name: 'Certificate of Maintenance Review', color: '#ffcf3f' },
+  tlog: { name: 'Technical Log', color: '#ff7ad9' }
+};
+
+/* Notebook facts – unlocked by mission dialogue and hidden logbook pages */
+const FACTS = {
+  mx1:  { t: 'mx',   s: 'Slide 64', x: 'Maintenance must be performed in accordance with a <b>Maintenance Schedule</b> prepared by the <b>Operator</b> and approved by the <b>Authority (DGCA)</b>.' },
+  mx2:  { t: 'mx',   s: 'Slide 64', x: 'The <b>owner or operator</b> is responsible for ensuring maintenance work is conducted in accordance with <b>Singapore airworthiness requirements</b>.' },
+  mx3:  { t: 'mx',   s: 'Slide 65', x: 'The Maintenance Schedule gives the <b>periods</b> at which the aircraft, components, equipment and installations are inspected, the <b>extent</b> of each inspection, and the practices and procedures to follow.' },
+  mx4:  { t: 'mx',   s: 'Slide 65', x: 'It lists components/equipment to be <b>overhauled or retired</b> at specified periods – <b>calendar time, flying time or other approved service life</b>.' },
+  mx5:  { t: 'mx',   s: 'Slide 65', x: 'It sets the procedures and documentation for certifying all checks and inspections, <b>issue of the CMR</b> and <b>issue of a CRS</b>.' },
+  mx6:  { t: 'mx',   s: 'Slide 66', x: 'Check intervals depend on type, e.g. <b>A320: A check 500 FH</b>, C check 15 months · <b>B777: A check 1000 FH</b>, C check 5000 FH · <b>A340-500: A check 1200 FH</b>, C check 18 months.' },
+  mx7:  { t: 'mx',   s: 'Slide 67', x: 'An aircraft is <b>not flown</b> unless all work has been <b>completed and certified</b> on the appropriate documents and the <b>pilot is notified</b> of its status.' },
+  mx8:  { t: 'mx',   s: 'Slide 67', x: 'If maintenance may have affected the <b>flight characteristics</b>, the aircraft is not released until it is <b>certified as fit for flight</b>.' },
+  mx9:  { t: 'mx',   s: 'Slide 73 · SAR 4.8', x: '<b>Duplicate inspection</b> is required after maintenance of any <b>flight control system</b>: inspected and certified by one qualified person, then <b>repeated and certified by a second</b> qualified person.' },
+  crs1: { t: 'crs',  s: 'Slide 68', x: 'A <b>CRS</b> must be issued by <b>appropriately licensed personnel</b> after any <b>overhaul, maintenance, modification, replacement, repair or inspection</b>.' },
+  crs2: { t: 'crs',  s: 'Slide 116 · SAR 145.1', x: '<b>No aircraft shall fly</b> unless a CRS is issued by an <b>approved (SAR-145) maintenance organisation</b> for the maintenance carried out.' },
+  crs3: { t: 'crs',  s: 'Slide 110', x: 'An <b>AML alone does not</b> permit the holder to issue a CRS – they also need a <b>SAR-145 certification authorisation</b> from an approved maintenance organisation.' },
+  crs4: { t: 'crs',  s: 'Slides 110, 121', x: 'Certifying staff need <b>6 months</b> of relevant maintenance experience in the <b>preceding 2 years</b>.' },
+  crs5: { t: 'crs',  s: 'Slide 125 · SAR 145.50', x: 'The CRS is issued by <b>certifying staff on behalf of the SAR-145 organisation</b> after satisfactory completion of <b>all</b> applicable maintenance tasks.' },
+  crs6: { t: 'crs',  s: 'Slide 125', x: 'A component maintained <b>off the aircraft</b> needs an <b>ARC</b> for that maintenance, and <b>another CRS</b> for its installation on the aircraft.' },
+  crs7: { t: 'crs',  s: 'Slide 127 · SAR 145.55', x: 'The organisation gives the operator a <b>copy of the CRS</b> plus any approved repair/modification data, and keeps detailed records for <b>2 years</b> from release.' },
+  crs8: { t: 'crs',  s: 'Slide 71', x: 'The CRS statement certifies the work was done in accordance with <b>SAR-145 and the Air Navigation Order</b>, and the aircraft/component is <b>ready for release to service</b>.' },
+  crs9: { t: 'crs',  s: 'Slides 100-104', x: 'AML <b>Cat A</b> certifies simple/minor line tasks it personally performed · <b>B1</b> structure, powerplant, mechanical &amp; electrical · <b>B2</b> avionics &amp; electrical.' },
+  cmr1: { t: 'cmr',  s: 'Slide 69 · SAR 4.3', x: 'The <b>CMR</b> provides evidence that the aircraft is in compliance with the <b>approved maintenance schedule</b>.' },
+  cmr2: { t: 'cmr',  s: 'Slide 69', x: 'It is issued by an <b>authorised LAE</b> with <b>at least 8 years</b> of aircraft maintenance experience.' },
+  cmr3: { t: 'cmr',  s: 'Slide 69', x: 'Aircraft <b>above 2730 kg MTWA</b>: CMR issued for <b>4 months</b>, or otherwise approved by CAAS.' },
+  cmr4: { t: 'cmr',  s: 'Slide 69', x: 'Aircraft <b>below 2730 kg MTWA</b>: CMR issued for <b>1 year</b>.' },
+  cmr5: { t: 'cmr',  s: 'Slide 69 (sample form)', x: 'The CMR form certifies a maintenance review of the aircraft and its equipment necessary for airworthiness was done per the <b>ANO</b>, stating the <b>date carried out</b> and the <b>date the next review is due</b>, signed with a licence/approval number.' },
+  tl1:  { t: 'tlog', s: 'Slide 70 · SAR 4.5', x: 'The <b>Captain (pilot-in-command)</b> records <b>take-off and landing times</b>, <b>flight duration</b> and any <b>technical defects</b> during flight in the technical log.' },
+  tl2:  { t: 'tlog', s: 'Slide 70', x: 'The technical log <b>remains on board at all times</b>; <b>copies</b> of the entry records are kept <b>on the ground</b>.' },
+  tl3:  { t: 'tlog', s: 'Slide 70', x: 'All entry records are kept by the operator for <b>2 years</b> after the date of entry or period of validity.' },
+  tl4:  { t: 'tlog', s: 'Slide 71', x: 'A tech log page has a <b>Defect Description</b>, an <b>Action Taken</b> section (MEL item, deferred defect, parts on/off), and a <b>signature with licence/authorisation number</b> under the CRS statement.' },
+  tl5:  { t: 'tlog', s: 'Slide 71', x: 'Entries are in <b>BLOCK LETTERS</b> and all times in <b>GMT (Z)</b>. The blue and pink copies are removed before the next flight.' },
+  tl6:  { t: 'tlog', s: 'Slide 72 · SAR 4.6', x: 'Public transport and aerial work aircraft keep an <b>Aircraft</b> log book, <b>Engine</b> log book, <b>Variable Pitch Propeller</b> log book and <b>Modification</b> log book.' },
+  tl7:  { t: 'tlog', s: 'Slide 72', x: 'Relevant entries from the <b>technical log are transferred</b> to the respective log books.' }
+};
+
+/* Hidden logbook pages (collectibles) – each reveals a fact */
+const PAGES = ['mx3', 'mx6', 'mx9', 'crs2', 'crs6', 'crs9', 'cmr3', 'cmr4', 'cmr5', 'tl4', 'tl5', 'tl6'];
+
+const CONTACTS = {
+  O: { name: 'Rina Okafor', role: 'Maintenance Planning', loc: 'ops',     color: '#4fc3ff', look: { shirt: 0x2b7bd6, hat: 0xffffff } },
+  C: { name: 'Dev Raman',   role: 'Chief Certifying Engineer', loc: 'hangar', color: '#7dff8a', look: { shirt: 0x26a65b, hat: 0xffd21a } },
+  Q: { name: 'Aisha Tan',   role: 'Quality Manager', loc: 'quality', color: '#ffcf3f', look: { shirt: 0xe0a106, hat: 0x222222 } },
+  K: { name: 'Capt. Lim',   role: 'Line Captain', loc: 'crew',       color: '#ff7ad9', look: { shirt: 0xffffff, hat: 0x111a33 } },
+  I: { name: 'Inspector Farah', role: 'CAAS Airworthiness', loc: 'caas', color: '#ff5252', look: { shirt: 0x1a237e, hat: 0x1a237e } }
+};
+
+const Q = (q, a, wrong, why, s) => ({ t: 'quiz', q, a, wrong, why, s });
+
+const MISSIONS = [
+/* ───── O · Aircraft Maintenance ───── */
+{ id: 'm1', c: 'O', topic: 'mx', name: 'Schedule Run', cash: 500, steps: [
+  { t: 'talk', lines: [
+    ['O', "You're the new engineer? Good timing. Someone at Vista Bay has been <b>pencil-whipping</b> – signing off maintenance that was never done."],
+    ['O', "So let's start with the rule they keep breaking. Maintenance follows a <b>Maintenance Schedule</b>. The <b>Operator</b> prepares it. The <b>Authority – DGCA</b> – approves it.", 'mx1'],
+    ['O', "And the <b>owner or operator</b> answers for it: the work must meet <b>Singapore airworthiness requirements</b>.", 'mx2'],
+    ['O', "Our approved copy is waiting at the <b>CAAS Office</b> in town. Grab any vehicle – press <b>F</b> – and go."]] },
+  { t: 'goto', loc: 'caas', time: 80, text: 'Drive to the <b>CAAS Office</b> and collect the approved Maintenance Schedule.' },
+  { t: 'talk', lines: [
+    ['I', "Approved Maintenance Schedule for Vista Bay Air. Know what's in it:"],
+    ['I', "The <b>periods</b> at which the aircraft, components, equipment and installations are inspected, the <b>extent</b> of each inspection, and the practices and procedures.", 'mx3'],
+    ['I', "Which components are <b>overhauled or retired</b> and when – by <b>calendar time, flying time or other approved service life</b>.", 'mx4'],
+    ['I', "And the procedures and paperwork for certifying checks – including issuing the <b>CMR</b> and the <b>CRS</b>.", 'mx5']] },
+  { t: 'goto', loc: 'ops', time: 80, text: 'Bring the schedule back to the <b>Ops Centre</b>.' },
+  { t: 'check', title: 'Planning desk', prompt: 'Which of these does the Maintenance Schedule provide? Select ALL that apply.',
+    items: [['Inspection periods and the extent of each inspection', true], ['Components to overhaul or retire at specified periods', true], ['Procedures for certifying checks, issuing the CMR and the CRS', true], ['The crew hotel roster', false], ['Passenger ticket prices', false]],
+    why: 'Slide 65: inspection periods & extent; overhaul/retirement schedule; procedures and documentation for checks, CMR and CRS.' },
+  Q('Who APPROVES the Maintenance Schedule?', 'The Authority (DGCA)', ['The aircraft manufacturer', 'The aircraft captain'], 'The Operator prepares it; the Authority (DGCA) approves it.', 'Slide 64')
+] },
+{ id: 'm2', c: 'O', topic: 'mx', name: 'Overdue', cash: 800, steps: [
+  { t: 'talk', lines: [
+    ['O', "Each type has its own check intervals. Remember these three:", 'mx6'],
+    ['O', "<b>A320 – A check every 500 flying hours.</b> <b>B777 – every 1000 FH.</b> <b>A340-500 – every 1200 FH.</b>"],
+    ['O', "Word is Pencil Whip are about to dispatch an aircraft that is <b>overdue</b>. Find it before it moves."]] },
+  { t: 'choose', time: 70, text: 'Drive to the aircraft that is <b>OVERDUE</b> for its A check.', opts: [
+    { loc: 'standA', label: '9V-VBA · A320\n520 FH since A check', ok: true },
+    { loc: 'standB', label: '9V-VBC · B777\n640 FH since A check', ok: false, why: 'The B777 A check is every 1000 FH – 640 FH is within limits.' },
+    { loc: 'standC', label: '9V-VBD · A340-500\n900 FH since A check', ok: false, why: 'The A340-500 A check is every 1200 FH – 900 FH is within limits.' }],
+    why: 'A320 A check every 500 FH: 520 FH is overdue.' },
+  { t: 'chase', veh: 'tug', from: 'standA', to: 'runway', hits: 3, text: "Pencil Whip's tug is towing 9V-VBA to the runway! <b>Ram it 3 times</b> to stop it.", who: 'Pencil Whip tug' },
+  { t: 'talk', lines: [
+    ['O', "Nice driving. That's the whole point: <b>no aircraft is flown</b> until ALL work is <b>completed and certified</b> on the right documents – and the <b>pilot is notified</b> of its status.", 'mx7'],
+    ['O', "And if the work could have affected <b>flight characteristics</b>, it is not released until <b>certified fit for flight</b>.", 'mx8']] },
+  Q('After an aileron actuator change, flight characteristics may have been affected. When can the aircraft be released?', 'Only after it is certified as fit for flight', ['Immediately – the job is finished', 'At the next scheduled A check'], 'Slide 67: where flight characteristics may have been affected, the aircraft shall not be released until certified as fit for flight.', 'Slide 67')
+] },
+/* ───── C · Certificate of Release to Service ───── */
+{ id: 'm3', c: 'C', topic: 'crs', name: 'Who Signs?', cash: 700, steps: [
+  { t: 'talk', lines: [
+    ['C', "Dev Raman, Chief Certifying Engineer. My signature is the last thing before an aircraft flies – the <b>Certificate of Release to Service</b>."],
+    ['C', "A CRS must be issued by <b>appropriately licensed personnel</b> after any <b>overhaul, maintenance, modification, replacement, repair or inspection</b>.", 'crs1'],
+    ['C', "And <b>no aircraft shall fly</b> unless the CRS comes from an <b>approved SAR-145 maintenance organisation</b>.", 'crs2'],
+    ['C', "Careful – an <b>AML alone is NOT enough</b>. You also need a <b>SAR-145 certification authorisation</b> from the organisation…", 'crs3'],
+    ['C', "…and <b>6 months</b> of relevant maintenance experience in the <b>preceding 2 years</b>.", 'crs4'],
+    ['C', "9V-VBC's brake change is done. Three engineers are on the apron. Only ONE can sign."]] },
+  { t: 'choose', time: 75, people: true, text: 'Find the engineer who can <b>legally sign the CRS</b> for 9V-VBC.', opts: [
+    { loc: 'standA', label: 'KEN\nB1 licence · no SAR-145 authorisation', ok: false, why: 'An AML alone does not permit the holder to issue a CRS – a SAR-145 certification authorisation is also needed.' },
+    { loc: 'standB', label: 'MEI\nB1 + SAR-145 authorisation\n8 months work in last 2 yrs', ok: true },
+    { loc: 'standC', label: 'JO\nSAR-145 authorisation\n2 months work in last 2 yrs', ok: false, why: 'Certifying staff need 6 months of relevant maintenance experience in the preceding 2 years.' }],
+    why: 'Mei holds an AML, a SAR-145 certification authorisation and enough recent experience.' },
+  { t: 'check', title: 'Mei\'s checklist', prompt: 'A CRS must be issued after completing which kinds of work? Select ALL that apply.',
+    items: [['Overhaul', true], ['Modification', true], ['Replacement of a part', true], ['Repair', true], ['Inspection', true], ['Boarding the passengers', false], ['Changing the crew roster', false]],
+    why: 'Slide 68: after overhauls, maintenance, modification, replacements, repairs and inspections.' },
+  { t: 'talk', lines: [
+    ['C', "She signs on behalf of the <b>SAR-145 organisation</b>, only after <b>all</b> applicable tasks are satisfactorily done.", 'crs5'],
+    ['C', "The CRS statement certifies the work was done per <b>SAR-145 and the Air Navigation Order</b>, and the aircraft is <b>ready for release to service</b>.", 'crs8'],
+    ['C', "Licence categories matter too: <b>Cat A</b> – simple line tasks they did themselves. <b>B1</b> – structure, powerplant, mechanical, electrical. <b>B2</b> – avionics and electrical.", 'crs9']] },
+  Q('An engineer holds a B1 AML but has no SAR-145 certification authorisation. Can they issue a CRS?', 'No – an AML alone does not permit issuing a CRS', ['Yes – the B1 licence is enough', 'Yes – but only at night'], 'Slide 110: to issue a CRS, an AML holder also needs a SAR-145 certification authorisation.', 'Slide 110')
+] },
+{ id: 'm4', c: 'C', topic: 'crs', name: 'Off-Wing', cash: 900, steps: [
+  { t: 'talk', lines: [
+    ['C', "9V-VBD's starter generator was repaired in the <b>Component Workshop</b> – off the aircraft."],
+    ['C', "Off-aircraft maintenance gets an <b>ARC</b> – Authorised Release Certificate. Once it's installed, the installation needs <b>another CRS</b>.", 'crs6'],
+    ['C', "Go collect it. Don't dawdle."]] },
+  { t: 'goto', loc: 'workshop', time: 75, text: 'Collect the repaired starter generator from the <b>Component Workshop</b>.' },
+  Q('Which certificate comes with the starter generator repaired in the workshop?', 'Authorised Release Certificate (ARC)', ['Certificate of Maintenance Review', 'Certificate of Registration'], 'Slide 125: a component maintained off the aircraft requires an ARC for that maintenance.', 'Slide 125'),
+  { t: 'goto', loc: 'standC', time: 80, text: 'Deliver it to <b>9V-VBD at Stand C</b>.' },
+  { t: 'sort', title: 'Which certificate?', prompt: 'Assign each job to the certificate it needs.', bins: ['ARC', 'CRS'],
+    items: [['Starter generator repaired on the workshop bench', 0], ['Installing the starter generator on 9V-VBD', 1], ['Fuel pump overhauled in the component shop', 0], ['Replacing a main wheel on the aircraft', 1]],
+    why: 'Off-aircraft component maintenance → ARC. Work on the aircraft, including fitting the component → CRS.' },
+  { t: 'talk', lines: [
+    ['C', "The engine controls were disturbed during the install. That's a control system – it needs a <b>duplicate inspection</b>.", 'mx9'],
+    ['C', "One qualified person inspects and certifies. Then a <b>second</b> qualified person repeats it and certifies. Fetch our second inspector from the hangar."]] },
+  { t: 'goto', loc: 'hangar', time: 70, text: 'Pick up the <b>second inspector</b> at the Line Maintenance Hangar.' },
+  { t: 'goto', loc: 'standC', time: 70, text: 'Bring the inspector back to <b>Stand C</b>.' },
+  { t: 'talk', lines: [
+    ['C', "Both signatures in. We give the operator a <b>copy of the CRS</b> plus any approved repair data – and we keep our detailed records for <b>2 years</b> from release.", 'crs7']] },
+  Q('How long must a SAR-145 organisation keep detailed maintenance records?', '2 years from release', ['72 hours', '7 days'], 'Slide 127: retain records for 2 years from the date the aircraft or component was released.', 'Slide 127')
+] },
+/* ───── Q · Certificate of Maintenance Review ───── */
+{ id: 'm5', c: 'Q', topic: 'cmr', name: 'Review Board', cash: 800, steps: [
+  { t: 'talk', lines: [
+    ['Q', "Aisha Tan, Quality. I look after the <b>Certificate of Maintenance Review – CMR</b>, SAR 4.3."],
+    ['Q', "A CMR is <b>evidence the aircraft complies with the approved maintenance schedule</b>.", 'cmr1'],
+    ['Q', "Only an <b>authorised LAE</b> with <b>at least 8 years</b> of aircraft maintenance experience may issue it.", 'cmr2'],
+    ['Q', "The form certifies the review was done per the <b>ANO</b>, gives the <b>date carried out</b> and the <b>date the next review is due</b>, and is signed with a licence number.", 'cmr5'],
+    ['Q', "Pencil Whip forged 9V-VBA's CMR. Three people in town say they can issue a real one. Find the right one."]] },
+  { t: 'choose', time: 90, people: true, text: 'Find the person who can <b>issue a genuine CMR</b>.', opts: [
+    { loc: 'pW', label: 'TAN\nAuthorised LAE\n9 years maintenance', ok: true },
+    { loc: 'pM', label: 'RAJ\nLAE\n5 years maintenance', ok: false, why: 'The CMR issuer needs at least 8 years of aircraft maintenance experience.' },
+    { loc: 'pE', label: 'CAPT. ONG\nAirline pilot\n15 years flying', ok: false, why: 'The CMR is issued by an authorised LAE – flying hours are not maintenance experience.' }],
+    why: 'An authorised LAE with at least 8 years of maintenance experience.' },
+  { t: 'goto', loc: 'quality', time: 90, text: 'Drive Tan to the <b>Quality Office</b>.' },
+  Q('What does a CMR provide evidence of?', 'Compliance with the approved maintenance schedule', ['That the aircraft is registered in Singapore', 'That the aircraft meets ICAO noise standards'], 'Slide 69: the CMR provides evidence that the aircraft complies with the approved maintenance schedule.', 'Slide 69')
+] },
+{ id: 'm6', c: 'Q', topic: 'cmr', name: 'Deadline', cash: 1000, steps: [
+  { t: 'talk', lines: [
+    ['Q', "How long a CMR lasts depends on weight – the maximum take-off weight authorised, <b>MTWA</b>."],
+    ['Q', "<b>Above 2730 kg MTWA: 4 months</b> – or otherwise approved by CAAS.", 'cmr3'],
+    ['Q', "<b>Below 2730 kg MTWA: 1 year.</b>", 'cmr4']] },
+  { t: 'choose', time: 60, text: '9V-VBA (A320, MTWA 78,000 kg) had its review on <b>3 Feb</b>. Drive to the correct <b>next-due date</b>.', opts: [
+    { loc: 'n_3_2', label: 'NEXT DUE\n2 JUN', ok: true },
+    { loc: 'n_4_2', label: 'NEXT DUE\n2 AUG', ok: false, why: 'Over 2730 kg MTWA the CMR runs 4 months, not 6 – unless CAAS approves otherwise.' },
+    { loc: 'n_4_3', label: 'NEXT DUE\n2 FEB next year', ok: false, why: '1 year is only for aircraft below 2730 kg MTWA.' }],
+    why: '78,000 kg is above 2730 kg → 4 months: 3 Feb → 2 Jun.' },
+  { t: 'choose', time: 60, text: '9V-VBX at the GA apron (MTWA 1,100 kg) had its review on <b>10 Mar</b>. When is the next one due?', opts: [
+    { loc: 'n_4_1', label: 'NEXT DUE\n9 JUL', ok: false, why: '4 months is for aircraft ABOVE 2730 kg. 9V-VBX is only 1,100 kg.' },
+    { loc: 'n_5_1', label: 'NEXT DUE\n9 MAR next year', ok: true },
+    { loc: 'n_5_2', label: 'NEXT DUE\n17 MAR', ok: false, why: '7 days is the Certificate of Fitness for Flight, not the CMR.' }],
+    why: 'Below 2730 kg MTWA → 1 year.' },
+  { t: 'chase', veh: 'van', from: 'n_4_3', to: 'dock', hits: 3, text: "Pencil Whip's forger is fleeing with blank CMR forms! <b>Ram his van 3 times.</b>", who: 'Forger\'s van' },
+  Q('A sample B777 CMR runs 6 months (3 Feb → 2 Aug), although the aircraft is over 2730 kg. How is that allowed?', 'The period was otherwise approved by CAAS', ['Heavy aircraft always get 6 months', 'The captain extended it'], 'Slide 69: above 2730 kg the CMR is 4 months "or otherwise approved by CAAS".', 'Slide 69')
+] },
+/* ───── K · Technical Log ───── */
+{ id: 'm7', c: 'K', topic: 'tlog', name: 'Flight Paperwork', cash: 700, steps: [
+  { t: 'talk', lines: [
+    ['K', "Captain Lim. After every flight, I – the <b>pilot-in-command</b> – fill in the <b>technical log</b>."],
+    ['K', "I record the <b>take-off and landing times</b>, the <b>flight duration</b>, and any <b>technical defects</b> during the flight.", 'tl1'],
+    ['K', "<b>BLOCK LETTERS</b>, and every time in <b>GMT – 'Z'</b>.", 'tl5'],
+    ['K', "A jet blast just scattered my notes over the apron. Grab what belongs in the tech log – leave the junk."]] },
+  { t: 'collect', time: 90, text: 'Collect the <b>4 tech log entries</b>. Avoid the junk (red).', items: [
+    { loc: 'n_1_2', label: 'TAKE-OFF 0342Z', ok: true }, { loc: 'n_2_2', label: 'LANDING 0718Z', ok: true },
+    { loc: 'n_3_2', label: 'FLIGHT TIME 3:36', ok: true }, { loc: 'n_4_2', label: 'DEFECT: PACK 2 FAULT', ok: true },
+    { loc: 'n_2_1', label: 'Passenger meal choices', ok: false, why: 'Meal choices are not tech log entries.' },
+    { loc: 'n_3_1', label: 'Crew hotel room no.', ok: false, why: 'Hotel rooms have nothing to do with airworthiness.' },
+    { loc: 'n_1_1', label: "Tomorrow's weather", ok: false, why: 'The tech log records what happened on the flight, not forecasts.' }] },
+  { t: 'talk', lines: [
+    ['K', "Got them all. Now the page itself: a <b>Defect Description</b> box, an <b>Action Taken</b> box – with the MEL item or deferred defect and parts on/off – and the <b>signature with licence/authorisation number</b> under the CRS statement.", 'tl4']] },
+  { t: 'sort', title: 'Tech log page', prompt: 'Put each entry in the right section of the technical log page.', bins: ['Defect Description', 'Action Taken', 'Certification'],
+    items: [['PACK 2 FAULT light on climb', 0], ['Pack 2 valve replaced IAW AMM, ops test OK', 1], ['Deferred under MEL item, Cat C', 1], ['Signature + licence/auth no. under the CRS statement', 2]],
+    why: 'Slide 71: defect description · action taken (incl. MEL / deferred defect) · signature, licence/auth no. and the CRS statement.' },
+  { t: 'talk', lines: [
+    ['K', "One more rule. The tech log <b>stays on board at all times</b> – <b>copies</b> of the entries are kept <b>on the ground</b>. That's why the blue and pink copies come out before the next flight.", 'tl2']] },
+  Q('Where must the technical log be kept?', 'On board at all times – copies of entries kept on the ground', ['In the Quality Office only', 'At CAAS, posted after each flight'], 'Slide 70: the tech log remains on board at all times; copies of entry records are kept on the ground.', 'Slide 70')
+] },
+{ id: 'm8', c: 'K', topic: 'tlog', name: 'Paper Trail', cash: 1000, steps: [
+  { t: 'talk', lines: [
+    ['K', "Tech log entries don't stay there. The relevant ones are <b>transferred to the log books</b>.", 'tl7'],
+    ['K', "SAR 4.6: public transport and aerial work aircraft keep four – <b>Aircraft</b>, <b>Engine</b>, <b>Variable Pitch Propeller</b> and <b>Modification</b> log books.", 'tl6'],
+    ['K', "And the operator keeps every entry record for <b>2 years</b> after the date of entry or period of validity.", 'tl3'],
+    ['K', "The Log Book Archive is east of Quality. File these entries."]] },
+  { t: 'choose', time: 60, text: 'File: <b>"No.2 engine fuel nozzle replaced"</b>', opts: 'books', ans: 1, why: 'Engine work → Engine log book.' },
+  { t: 'choose', time: 45, text: 'File: <b>"Service bulletin cabin modification embodied"</b>', opts: 'books', ans: 3, why: 'An embodied modification → Modification log book.' },
+  { t: 'choose', time: 45, text: 'File: <b>"Propeller pitch-change mechanism overhauled"</b>', opts: 'books', ans: 2, why: 'Propeller work → Variable Pitch Propeller log book.' },
+  { t: 'choose', time: 45, text: 'File: <b>"Main landing gear brake unit replaced"</b>', opts: 'books', ans: 0, why: 'Airframe work such as landing gear → Aircraft log book.' },
+  { t: 'chase', veh: 'truck', from: 'archive', to: 'dock', hits: 3, text: 'Pencil Whip are dumping last year\'s tech logs in the sea! <b>Ram the truck 3 times.</b>', who: 'Shredder truck' },
+  Q('How long does the operator keep technical log entry records?', '2 years after the date of entry or period of validity', ['Until the aircraft is sold', '30 days'], 'Slide 70: all entry records shall be kept by the operator for 2 years.', 'Slide 70')
+] },
+/* ───── I · Final ───── */
+{ id: 'm9', c: 'I', topic: null, name: 'Pencil Whip Takedown', cash: 2500, final: true, steps: [
+  { t: 'talk', lines: [
+    ['I', "Inspector Farah, CAAS. You've rattled them. Their boss, <b>Skipworth</b>, is about to dispatch 9V-VBC with a fake release."],
+    ['I', "Do it by the book and we've got him. The captain at the <b>Crew Centre</b> has the tech log."]] },
+  { t: 'goto', loc: 'crew', time: 70, text: 'Get to the <b>Crew Centre</b> and read 9V-VBC\'s tech log.' },
+  Q('The tech log shows "NO.1 ENGINE VIBRATION" on the last flight. What must happen before 9V-VBC flies?', 'Rectify it, certify the work with a CRS and notify the pilot of its status', ['Nothing – the captain has accepted it', 'Write "OK" in pencil and dispatch'], 'Slides 67-68: work completed and certified (CRS), pilot notified of status.', 'Slides 67-68'),
+  { t: 'goto', loc: 'hangar', time: 70, text: 'Grab a licensed team from the <b>Line Maintenance Hangar</b>.' },
+  { t: 'goto', loc: 'standB', time: 70, text: 'Get to <b>9V-VBC at Stand B</b>.' },
+  { t: 'check', title: 'Dispatch gate', prompt: 'Before 9V-VBC can go, which must be true? Select ALL that apply.',
+    items: [['Work done per the approved Maintenance Schedule', true], ['CRS signed by staff with an AML + SAR-145 authorisation', true], ['CMR current – within 4 months (over 2730 kg) unless CAAS approved otherwise', true], ['Tech log completed; copies left on the ground', true], ['Skipworth said it\'s fine', false], ['The last CMR was issued 7 months ago', false]],
+    why: 'Maintenance Schedule, CRS by authorised certifying staff, a current CMR and a complete tech log.' },
+  { t: 'chase', veh: 'follow', from: 'standB', to: 'runway', hits: 4, slow: 0.7, text: 'Skipworth is running in the Follow-Me car! <b>Ram him 4 times.</b>', who: 'Skipworth' },
+  { t: 'talk', lines: [
+    ['I', "Got him. Pencil-whipping ends today."],
+    ['I', "Come to the <b>CAAS Office</b> when you're ready. The <b>Licence Board</b> wants a word."]] }
+] }
+];
+
+/* Final Licence Board exam + Records Desk question bank */
+const EXAM = [
+  Q('Who prepares the Maintenance Schedule?', 'The Operator', ['CAAS', 'The aircraft captain'], 'Prepared by the Operator, approved by the Authority (DGCA).', 'Slide 64'),
+  Q('Who is responsible for ensuring maintenance meets Singapore airworthiness requirements?', 'The owner or operator', ['ICAO', 'The airport authority'], 'Slide 64.', 'Slide 64'),
+  Q('Components are overhauled or retired at specified periods measured in…', 'Calendar time, flying time or other approved service life', ['Passenger numbers only', 'Fuel burnt only'], 'Slide 65.', 'Slide 65'),
+  Q('A320 A check interval (slide 66)?', '500 FH', ['5000 FH', '15 days'], 'A319/A320: A check 500 FH, C check 15 months.', 'Slide 66'),
+  Q('Duplicate inspection is required after maintenance of…', 'Any flight control system', ['The passenger seats', 'The lavatory'], 'SAR 4.8: control surfaces, engine/propeller controls etc.', 'Slide 73'),
+  Q('A duplicate inspection means…', 'Inspected and certified by one qualified person, then repeated and certified by a second', ['Two copies of the same form', 'The same person checks twice'], 'Slide 73.', 'Slide 73'),
+  Q('Who must issue a CRS?', 'Appropriately licensed personnel (certifying staff)', ['Any ramp worker', 'The aircraft owner'], 'Slide 68.', 'Slide 68'),
+  Q('Besides an AML, what does an engineer need to issue a CRS?', 'A SAR-145 certification authorisation', ['A Certificate of Registration', 'A private pilot licence'], 'Slide 110.', 'Slide 110'),
+  Q('Certifying staff must have how much recent experience?', '6 months in the preceding 2 years', ['1 month in the last year', '8 years'], 'Slides 110, 121.', 'Slide 110'),
+  Q('A component repaired off the aircraft and then fitted needs…', 'An ARC for the repair and another CRS for the installation', ['Only a CMR', 'Nothing more'], 'Slide 125.', 'Slide 125'),
+  Q('No aircraft shall fly unless a CRS is issued by…', 'An approved SAR-145 maintenance organisation', ['The airline marketing team', 'Any overseas workshop'], 'SAR 145.1.', 'Slide 116'),
+  Q('What does the CMR provide evidence of?', 'Compliance with the approved maintenance schedule', ['Noise compliance', 'Ownership of the aircraft'], 'SAR 4.3.', 'Slide 69'),
+  Q('Minimum experience for the LAE issuing a CMR?', 'At least 8 years of aircraft maintenance', ['2 years', '6 months'], 'Slide 69.', 'Slide 69'),
+  Q('CMR period for an aircraft ABOVE 2730 kg MTWA?', '4 months, or otherwise approved by CAAS', ['1 year', '7 days'], 'Slide 69.', 'Slide 69'),
+  Q('CMR period for an aircraft BELOW 2730 kg MTWA?', '1 year', ['4 months', '2 years'], 'Slide 69.', 'Slide 69'),
+  Q('Who records take-off/landing times and defects in the tech log?', 'The Captain (pilot-in-command)', ['The ground handler', 'The CAAS inspector'], 'SAR 4.5.', 'Slide 70'),
+  Q('Where is the technical log kept?', 'On board at all times, with copies of entries on the ground', ['Only in the hangar', 'Only at CAAS'], 'Slide 70.', 'Slide 70'),
+  Q('How long are tech log entry records kept by the operator?', '2 years after the date of entry or period of validity', ['3 months', 'Forever'], 'Slide 70.', 'Slide 70'),
+  Q('Which is NOT one of the SAR 4.6 log books?', 'Cabin catering log book', ['Engine log book', 'Modification log book'], 'Aircraft, Engine, Variable Pitch Propeller, Modification.', 'Slide 72'),
+  Q('Tech log times are written in…', 'GMT (Z)', ['Local Singapore time', 'Any time zone'], 'Slide 71.', 'Slide 71'),
+  Q('Where do relevant tech log entries end up?', 'Transferred to the respective log books', ['Thrown away after landing', 'Emailed to passengers'], 'Slide 72.', 'Slide 72'),
+  Q('Maintenance may have affected flight characteristics. The aircraft is released only when…', 'Certified as fit for flight', ['The captain says so', 'It has been washed'], 'Slide 67.', 'Slide 67')
+];
