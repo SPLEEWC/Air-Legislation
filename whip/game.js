@@ -178,10 +178,11 @@ const L = k => ({ x: LOC[k][0], z: LOC[k][1] });
 
 /* ───────── colliders ───────── */
 const COL = [];
-function addCol(cx, cz, w, d, h = 10) { COL.push({ x0: cx - w / 2, x1: cx + w / 2, z0: cz - d / 2, z1: cz + d / 2, h }); }
+function addCol(cx, cz, w, d, h = 10) { const c = { x0: cx - w / 2, x1: cx + w / 2, z0: cz - d / 2, z1: cz + d / 2, h }; COL.push(c); return c; }
 function pushOut(x, z, r) {
   let px = 0, pz = 0;
   for (const c of COL) {
+    if (c.off) continue;
     if (x + r < c.x0 || x - r > c.x1 || z + r < c.z0 || z - r > c.z1) continue;
     const qx = clamp(x, c.x0, c.x1), qz = clamp(z, c.z0, c.z1), dx = x - qx, dz = z - qz, d2 = dx * dx + dz * dz;
     if (d2 > r * r) continue;
@@ -197,7 +198,7 @@ function pushOut(x, z, r) {
 function segBlocked(x0, z0, x1, z1, minH = 2.5) {
   const dx = x1 - x0, dz = z1 - z0;
   for (const c of COL) {
-    if (c.h < minH) continue; let t0 = 0, t1 = 1;
+    if (c.off || c.h < minH) continue; let t0 = 0, t1 = 1;
     if (Math.abs(dx) < 1e-9) { if (x0 < c.x0 || x0 > c.x1) continue; } else { let a = (c.x0 - x0) / dx, b = (c.x1 - x0) / dx; if (a > b) [a, b] = [b, a]; t0 = Math.max(t0, a); t1 = Math.min(t1, b); if (t0 > t1) continue; }
     if (Math.abs(dz) < 1e-9) { if (z0 < c.z0 || z0 > c.z1) continue; } else { let a = (c.z0 - z0) / dz, b = (c.z1 - z0) / dz; if (a > b) [a, b] = [b, a]; t0 = Math.max(t0, a); t1 = Math.min(t1, b); if (t0 > t1) continue; }
     return true;
@@ -308,7 +309,7 @@ for (let i = 0; i < NX - 1; i++) for (let j = 2; j < NZ - 1; j++) { const cx = (
 // stand markings
 [-80, 0, 80, 160].forEach(x => { plane(0.4, 60, 0xf1c232, x, 0.03, -120); });
 // aircraft
-const aircraft = {};
+const aircraft = {}, PLANES = [];
 function airliner(x, z, reg, o) {
   const g = new THREE.Group(), Lf = o.len, R = o.r, span = o.span, y0 = R + 1.6, wht = M(0xf2f4f7);
   const fus = cyl(R, R, Lf, wht, 0, y0, 0, g, 16); fus.rotation.x = Math.PI / 2;
@@ -326,7 +327,8 @@ function airliner(x, z, reg, o) {
   [[0, Lf * 0.36], [-R * 1.2, -Lf * 0.06], [R * 1.2, -Lf * 0.06]].forEach(([a, b]) => cyl(0.35, 0.35, 1.6, 0x222222, a, 0.8, b, g, 8));
   g.position.set(x, 0, z); scene.add(g);
   const lb = textSprite(reg + '\n' + o.type, { size: 44, scale: 0.06, edge: '#ffc83d' }); lb.position.set(x, y0 + R * 4 + 3, z); scene.add(lb);
-  addCol(x, z, R * 2.1, Lf + R * 2.4, y0 + R); addCol(x, z - Lf * 0.04, span, Lf * 0.2, 4); addCol(x, z - Lf / 2, span * 0.36, Lf * 0.09, 4);
+  const cs = [addCol(x, z, R * 2.1, Lf + R * 2.4, y0 + R), addCol(x, z - Lf * 0.04, span, Lf * 0.2, 4), addCol(x, z - Lf / 2, span * 0.36, Lf * 0.09, 4)]; cs.forEach(c => { c.plane = true; });
+  PLANES.push({ reg, type: o.type, g, lb, lbY: y0 + R * 4 + 3, cols: cs, home: { x, z }, len: Lf + R * 2.4, span, wingZ: -Lf * 0.04, fusR: R, spec: o.type === 'A320' ? 'a320' : 'heavy' });
   aircraft[reg] = g; return g;
 }
 airliner(-80, -126, '9V-VBA', { len: 30, r: 1.9, span: 30, c1: 0x1f5fbf, c2: 0x1f5fbf, type: 'A320' });
@@ -337,7 +339,8 @@ airliner(80, -128, '9V-VBD', { len: 38, r: 2.3, span: 40, c1: 0x188b5a, c2: 0x9a
   const f = cyl(0.7, 0.5, 7, 0xffffff, 0, 1.4, 0, g); f.rotation.x = Math.PI / 2; box(11, 0.15, 1.5, 0xffffff, 0, 2.3, 0.8, g); box(0.15, 1.6, 1.2, 0xd8343a, 0, 2.2, -3.2, g);
   box(3.4, 0.12, 0.9, 0xffffff, 0, 1.5, -3.2, g); const p = box(0.1, 1.8, 0.2, 0x222222, 0, 1.4, 3.6, g); p.userData.spin = true; g.userData.prop = p;
   [-1, 1].forEach(s => cyl(0.25, 0.25, 0.5, 0x222222, s * 1, 0.25, 0.6, g, 8)); g.position.set(x, 0, z); scene.add(g); aircraft['9V-VBX'] = g;
-  const lb = textSprite('9V-VBX\nLight aircraft', { size: 44, scale: 0.05, edge: '#ffc83d' }); lb.position.set(x, 6, z); scene.add(lb); addCol(x, z, 11, 3, 3); addCol(x, z, 1.6, 8, 3);
+  const lb = textSprite('9V-VBX\nLight aircraft', { size: 44, scale: 0.05, edge: '#ffc83d' }); lb.position.set(x, 6, z); scene.add(lb); const cs = [addCol(x, z, 11, 3, 3), addCol(x, z, 1.6, 8, 3)]; cs.forEach(c => { c.plane = true; });
+  PLANES.push({ reg: '9V-VBX', type: 'Light aircraft', g, lb, lbY: 6, cols: cs, home: { x, z }, len: 8, span: 11, wingZ: 0.8, fusR: 0.8, spec: 'light' });
   bld(160, -146, 40, 18, 9, 0x8e98a6, 0x6b7380); sign('GA APRON', 160, 12, -136);
 }
 // line maintenance hangar (open front)
@@ -369,7 +372,7 @@ billboard(70, 30, 108, Math.PI, 'SKYHOOK INSURANCE', 'Covered from wheels-up to 
 billboard(-90, 10, 110, 0, 'RAMP FM 98.6', 'The sound of the apron.', '#ff8c1a', '#8a2e00');
 billboard(150, 18, 120, 0, '100LL BURGERS', 'High-octane flavour.', '#27ae60', '#0c4a26');
 // street lamps along landside roads
-function lamp(x, z, ax, az) { if (Object.values(LOC).some(([lx, lz]) => Math.hypot(lx - x, lz - z) < 6.5) || Math.hypot(x - 64, z - 16) < 5 || Math.hypot(x - 96, z - 16) < 5) return; cyl(0.11, 0.16, 6.6, 0x3a3d42, x, 3.3, z); const arm = box(Math.abs(ax) * 2.6 + 0.12, 0.12, Math.abs(az) * 2.6 + 0.12, 0x3a3d42, x + ax * 1.3, 6.5, z + az * 1.3); arm.castShadow = false;
+function lamp(x, z, ax, az) { if (z < -82 || Object.values(LOC).some(([lx, lz]) => Math.hypot(lx - x, lz - z) < 6.5) || Math.hypot(x - 64, z - 16) < 5 || Math.hypot(x - 96, z - 16) < 5) return; cyl(0.11, 0.16, 6.6, 0x3a3d42, x, 3.3, z); const arm = box(Math.abs(ax) * 2.6 + 0.12, 0.12, Math.abs(az) * 2.6 + 0.12, 0x3a3d42, x + ax * 1.3, 6.5, z + az * 1.3); arm.castShadow = false;
   box(0.9, 0.22, 0.9, lampHeadMat, x + ax * 2.6, 6.4, z + az * 2.6); flat(11, 11, poolMat, x + ax * 3, 0.07, z + az * 3); addCol(x, z, 0.4, 0.4, 6); }
 for (let i = 0; i < NX; i++) for (let j = 2; j < NZ; j++) {
   const a = npos(nid(i, j));
@@ -545,7 +548,7 @@ function updateTraffic(v, dt) {
   if (Math.hypot(ai.tgt.x - v.x, ai.tgt.z - v.z) < 5) { const nb = NB(ai.next).filter(n => ok(n) && n !== ai.prev); const n = nb.length ? nb[Math.random() * nb.length | 0] : ai.prev; ai.prev = ai.next; ai.next = n; ai.tgt = laneTarget(ai.prev, n); }
   const fx = Math.sin(v.h), fz = Math.cos(v.h); let block = false;
   const chk = (x, z) => { const dx = x - v.x, dz = z - v.z, al = dx * fx + dz * fz, lat = -dx * fz + dz * fx; if (al > 0 && al < v.s.len / 2 + 7 && Math.abs(lat) < 2.6) block = true; };
-  for (const o of vehicles) if (o !== v) chk(o.x, o.z); for (const p of peds) if (p.state !== 'down') chk(p.x, p.z); if (!P.veh) chk(P.x, P.z);
+  for (const o of vehicles) if (o !== v) chk(o.x, o.z); for (const p of peds) if (p.state !== 'down') chk(p.x, p.z); if (!P.veh && !P.plane && !P.para) chk(P.x, P.z);
   if (block) { ai.blockT = (ai.blockT || 0) + dt; if (ai.blockT > 3 && Math.random() < dt) sfx.horn(); } else ai.blockT = 0;
   driveTo(v, ai.tgt.x, ai.tgt.z, block ? 0 : (ai.air ? 8 : 12), dt);
   if (block && ai.blockT > 6) { ai.rev = 0.8; ai.blockT = 0; }
@@ -591,7 +594,7 @@ function runner(x, z, from) { const g = makePerson({}); scene.add(g); peds.push(
 /* ───────── player ───────── */
 const P = { x: 0, z: 0, h: 0, veh: null, st: 100, winded: false, run: false, g: makePerson({ shirt: 0xff8c1a, vest: 0xd4ff3a, hat: 0xffffff, skin: 0xe0ac69, pants: 0x1f2a3a }) };
 scene.add(P.g);
-const pSpeed = () => P.veh ? spd(P.veh) : P.footSp || 0;
+const pSpeed = () => P.plane ? P.plane.s : P.para ? 99 : P.veh ? spd(P.veh) : P.footSp || 0;
 let mode = 'title';
 const keys = {}, joy = { x: 0, y: 0 };
 addEventListener('keydown', e => {
@@ -625,13 +628,17 @@ if (TOUCH) {
 }
 function nearVeh() { let b = null, bd = 1e9; for (const v of vehicles) { const d = Math.hypot(v.x - P.x, v.z - P.z) - v.s.len / 2; if (d < 2.6 && d < bd) { bd = d; b = v; } } return b; }
 function enterExit() {
+  if (P.para) { if (!P.para.open) openChute(false); return; }
+  if (P.plane) { planeExit(); return; }
   if (P.veh) {
     const v = P.veh; if (spd(v) > 6) { toast('Slow down to get out.'); return; }
     const fx = Math.sin(v.h), fz = Math.cos(v.h);
     for (const side of [1, -1]) { const x = v.x + fz * side * (v.s.wid / 2 + 1), z = v.z - fx * side * (v.s.wid / 2 + 1), [px, pz] = pushOut(x, z, 0.45); if (Math.abs(px) + Math.abs(pz) < 0.5 || side === -1) { P.x = x + px; P.z = z + pz; break; } }
     P.h = v.h; v.driver = null; v.in = { thr: 0, steer: 0, hb: 1 }; P.veh = null; P.g.visible = true; sfx.door(); $('speed').classList.add('hidden'); if (window.speechSynthesis) speechSynthesis.cancel(); return;
   }
-  const v = nearVeh(); if (!v) return;
+  const v = nearVeh(), np = nearPlane();
+  if (np && (!v || np.d < Math.hypot(v.x - P.x, v.z - P.z) - v.s.len / 2)) { boardPlane(np.p); return; }
+  if (!v) return;
   if (v.driver === 'target') { toast("That's the getaway vehicle – <b>ram it</b> from another vehicle!"); return; }
   if (v.driver === 'npc' || v.driver === 'cop') {
     runner(v.x + Math.cos(v.h) * 2, v.z - Math.sin(v.h) * 2, P); if (v.dg) { v.g.remove(v.dg); v.dg = null; }
@@ -645,6 +652,8 @@ let touchRun = false;
 function hudStam() { const el = $('stam'), show = !P.veh && (P.run || P.st < 99.5); el.classList.toggle('hidden', !show); if (show) { $('stamF').style.width = P.st + '%'; el.classList.toggle('winded', P.winded); } }
 function showVehName() { if (!P.veh) return; $('vehN').textContent = P.veh.s.name; $('vehR').textContent = STATIONS[save.radio]; $('veh').style.opacity = 1; clearTimeout(showVehName.t); showVehName.t = setTimeout(() => { $('veh').style.opacity = 0; }, 3000); talkT = 2; }
 function updatePlayer(dt) {
+  if (P.plane) { flyPlayer(dt); return; }
+  if (P.para) { updatePara(dt); return; }
   const up = (keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) - joy.y, rt = (keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + joy.x;
   if (P.veh) { const v = P.veh; v.in.thr = clamp(up, -1, 1); v.in.steer = clamp(rt, -1, 1); v.in.hb = keys.Space ? 1 : 0; P.x = v.x; P.z = v.z; P.h = v.h; $('prompt').classList.add('hidden'); $('stam').classList.add('hidden'); return; }
   const fwd = clamp(up, -1, 1), wantRun = (keys.ShiftLeft || keys.ShiftRight || touchRun || Math.hypot(joy.x, joy.y) > 0.96) && fwd > 0.3;
@@ -658,9 +667,156 @@ function updatePlayer(dt) {
   const [px, pz] = pushOut(P.x, P.z, 0.45); P.x += px; P.z += pz;
   P.g.position.set(P.x, 0, P.z); P.g.rotation.y = P.h; animPerson(P.g, dt, Math.abs(sp), P.run); hudStam();
   if (P.run && Math.random() < dt * 6) puff(P.x, 0.2, P.z, 0.5, 0xc8bca4, 0.6, 0.3);
-  const nv = nearVeh(), pr = $('prompt');
-  if (nv && mode === 'play') { pr.classList.remove('hidden'); pr.innerHTML = `${TOUCH ? 'Tap <b>ENTER</b>' : 'Press <span class="k">F</span>'} to ${nv.driver === 'npc' || nv.driver === 'cop' ? 'take' : 'enter'} the <b>${nv.s.name}</b>${nv.driver === 'npc' ? ' <span style="color:#ff4b4b">(★ heat)</span>' : nv.type === 'caas' ? ' <span style="color:#ff4b4b">(★★ heat)</span>' : ''}`; }
+  const nv = nearVeh(), np = nearPlane(), pr = $('prompt');
+  if (np && mode === 'play' && (!nv || np.d < Math.hypot(nv.x - P.x, nv.z - P.z) - nv.s.len / 2)) { pr.classList.remove('hidden'); pr.innerHTML = `${TOUCH ? 'Tap <b>ENTER</b>' : 'Press <span class="k">F</span>'} to fly <b>${np.p.reg}</b> (${np.p.type})${np.p.T.heat ? ' <span style="color:#ff4b4b">(★★ heat)</span>' : ''}`; }
+  else if (nv && mode === 'play') { pr.classList.remove('hidden'); pr.innerHTML = `${TOUCH ? 'Tap <b>ENTER</b>' : 'Press <span class="k">F</span>'} to ${nv.driver === 'npc' || nv.driver === 'cop' ? 'take' : 'enter'} the <b>${nv.s.name}</b>${nv.driver === 'npc' ? ' <span style="color:#ff4b4b">(★ heat)</span>' : nv.type === 'caas' ? ' <span style="color:#ff4b4b">(★★ heat)</span>' : ''}`; }
   else pr.classList.add('hidden');
+}
+
+/* ───────── aircraft: flying & parachute ───────── */
+const PT = {
+  light: { name: 'LIGHT AIRCRAFT', stall: 17, max: 55, acc: 9, pitch: 1.0, roll: 2.2, turn: 1.0, heat: 0 },
+  a320:  { name: 'AIRBUS A320', stall: 34, max: 95, acc: 7.5, pitch: 0.62, roll: 1.4, turn: 0.75, heat: 2 },
+  heavy: { name: 'WIDEBODY JET', stall: 38, max: 100, acc: 6.5, pitch: 0.52, roll: 1.1, turn: 0.65, heat: 2 }
+};
+PLANES.forEach(pl => { Object.assign(pl, { x: pl.home.x, z: pl.home.z, y: 0, h: 0, p: 0, r: 0, s: 0, thr: 0, vy: 0, state: 'parked', T: PT[pl.spec], t: 0 }); pl.g.rotation.order = 'YXZ'; });
+function placePlane(pl) { pl.g.position.set(pl.x, pl.y, pl.z); pl.g.rotation.set(-pl.p, pl.h, pl.r); pl.lb.position.set(pl.x, pl.y + pl.lbY, pl.z); pl.lb.visible = pl.state === 'parked'; }
+function resetPlane(pl) { Object.assign(pl, { x: pl.home.x, z: pl.home.z, y: 0, h: 0, p: 0, r: 0, s: 0, thr: 0, vy: 0, state: 'parked', t: 0 }); pl.g.visible = true; pl.cols.forEach(c => { c.off = false; }); placePlane(pl); }
+function nearPlane() {
+  let b = null;
+  for (const pl of PLANES) {
+    if (pl.y > 0.5 || pl.state === 'wreck' || pl.state === 'bail' || pl.state === 'player') continue;
+    const fx = Math.sin(pl.h), fz = Math.cos(pl.h), dx = P.x - pl.x, dz = P.z - pl.z, al = clamp(dx * fx + dz * fz, -pl.len / 2, pl.len / 2), d = Math.hypot(P.x - (pl.x + fx * al), P.z - (pl.z + fz * al)) - pl.fusR;
+    if (d < 3 && (!b || d < b.d)) b = { p: pl, d };
+  }
+  return b;
+}
+function boardPlane(pl) {
+  if (MS) { toast('Aircraft are grounded while you are on a job – finish the mission first.'); return; }
+  P.plane = pl; pl.state = 'player'; pl.cols.forEach(c => { c.off = true; }); P.g.visible = false; loops(); sfx.door(); placePlane(pl);
+  $('speed').classList.remove('hidden'); $('vehN').textContent = `${pl.T.name} · ${pl.reg}`; $('vehR').textContent = ''; $('veh').style.opacity = 1; clearTimeout(showVehName.t); showVehName.t = setTimeout(() => { $('veh').style.opacity = 0; }, 3000);
+  if (pl.T.heat) addHeat(pl.T.heat, 'Moving an airliner with no CRS and no crew – CAAS is coming!');
+  else toast('Pre-flight check: tech log reviewed, CRS signed, C of A valid – <b>cleared to fly</b>.', 5000);
+  help(TOUCH ? 'Stick up/down: climb / dive · stick left/right: bank · throttle is automatic – hold <b>BRAKE</b> to slow · <b>ENTER/EXIT</b> in the air: parachute'
+    : '<kbd>W</kbd>/<kbd>S</kbd> throttle · <kbd>↑</kbd> climb · <kbd>↓</kbd> dive · <kbd>A</kbd><kbd>D</kbd> bank / steer · <kbd>Space</kbd> wheel brakes · <kbd>F</kbd> in the air: bail out with a parachute', 10000);
+}
+function flyPlayer(dt) {
+  const pl = P.plane;
+  let thrD = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
+  const pitch = clamp((keys.ArrowUp || keys.KeyI ? 1 : 0) - (keys.ArrowDown || keys.KeyK ? 1 : 0) - joy.y, -1, 1), roll = clamp((keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + joy.x, -1, 1);
+  if (TOUCH) thrD = keys.Space ? -1 : 1;
+  flyStep(pl, dt, { thrD, pitch, roll, brake: !!keys.Space });
+  if (P.plane) { P.x = pl.x; P.z = pl.z; P.h = pl.h; }
+  $('prompt').classList.add('hidden'); $('stam').classList.add('hidden');
+}
+function flyStep(pl, dt, c) {
+  const T = pl.T, gnd = pl.y <= 0.01, px = pl.x, pz = pl.z;
+  pl.thr = clamp(pl.thr + c.thrD * dt * 0.7, 0, 1);
+  let acc = pl.thr * T.acc - T.acc * (pl.s / T.max) ** 2;
+  if (gnd) acc -= pl.s > 0.1 ? (c.brake ? 12 : 0.6) : 0; else acc -= Math.sin(pl.p) * 6;
+  pl.s = Math.max(0, pl.s + acc * dt);
+  const lift = pl.s >= T.stall;
+  if (gnd) {
+    pl.r += -pl.r * Math.min(1, dt * 4);
+    if (lift && c.pitch > 0) pl.p = Math.min(0.3, pl.p + c.pitch * T.pitch * 0.7 * dt); else pl.p = Math.max(0, pl.p - dt * 0.6);
+    pl.h -= c.roll * 0.8 * clamp(pl.s / 6, 0.2, 1) * (pl.s > T.stall * 0.6 ? 0.35 : 1) * dt;
+  } else {
+    pl.p = clamp(pl.p + c.pitch * T.pitch * dt * 0.9 - (lift ? 0 : dt * 0.7), -0.75, 0.6);
+    pl.r += (c.roll * 0.95 - pl.r) * Math.min(1, dt * T.roll);
+    pl.h -= Math.sin(pl.r) * T.turn * (1.2 - Math.min(0.6, pl.s / 200)) * dt;
+  }
+  const vh = pl.s * Math.cos(pl.p); let vy = pl.s * Math.sin(pl.p); if (!gnd && !lift) vy -= 9 * (1 - pl.s / T.stall) + 2;
+  if (gnd && vy < 0) vy = 0;
+  pl.x += Math.sin(pl.h) * vh * dt; pl.z += Math.cos(pl.h) * vh * dt; pl.y = Math.min(450, pl.y + vy * dt); pl.vy = vy;
+  if (pl.y >= 450) pl.p = Math.min(pl.p, 0);
+  const sea = Math.abs(pl.x) > 238 || pl.z < -262 || pl.z > 205;
+  if (pl.y <= 0) {
+    if (!gnd && (vy < -8 || Math.abs(pl.r) > 0.5 || pl.p < -0.35 || sea)) { crashPlane(pl, sea); return; }
+    if (!gnd && pl === P.plane) { toast('<b style="color:#5fe36a">Touchdown.</b>'); sfx.ok(); }
+    pl.y = 0; if (sea) { pl.x = px; pl.z = pz; pl.s = 0; }
+  }
+  // stay within Vista Bay airspace
+  const far = Math.hypot(pl.x, pl.z + 30);
+  if (far > 700 && !gnd) { const want = Math.atan2(-pl.x, -(pl.z + 30)); pl.h += wrap(want - pl.h) * Math.min(1, dt * 0.8); if (pl === P.plane && !pl.warn) { pl.warn = 1; toast('Leaving Vista Bay airspace – turning back.'); } } else pl.warn = 0;
+  // obstacles: nose, tail and wingtips
+  const ch = Math.cos(pl.h), sh = Math.sin(pl.h);
+  for (const [lx, lz] of [[0, pl.len / 2], [0, -pl.len / 2], [pl.span / 2, pl.wingZ], [-pl.span / 2, pl.wingZ]]) {
+    const wx = pl.x + lx * ch + lz * sh, wz = pl.z - lx * sh + lz * ch;
+    for (const k of COL) {
+      if (k.off || pl.cols.includes(k) || pl.y > k.h || wx < k.x0 || wx > k.x1 || wz < k.z0 || wz > k.z1) continue;
+      if (pl.s > 14 || pl.y > 2) { crashPlane(pl, false); return; }
+      pl.x = px; pl.z = pz; pl.s = 0; break;
+    }
+  }
+  placePlane(pl);
+}
+const flashS = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: 0xffa040, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })); flashS.visible = false; scene.add(flashS); let flashT = 0;
+function boom(x, y, z, sea) {
+  sfx.hit(); noise(1.2, 0.35, 260); flashS.position.set(x, y + 2, z); flashS.visible = !sea; flashT = 0.6;
+  for (let i = 0; i < 22; i++) puff(x + rnd(-5, 5), y + rnd(0, 4), z + rnd(-5, 5), rnd(2, 4.5), sea ? 0xffffff : (i % 3 ? 0x2a2a2a : 0xff8a2a), rnd(1.6, 3.2), rnd(1, 5));
+}
+function crashPlane(pl, sea) {
+  boom(pl.x, Math.max(1, pl.y), pl.z, sea); pl.state = 'wreck'; pl.t = 12; pl.g.visible = false; pl.lb.visible = false; pl.s = 0; pl.thr = 0;
+  if (P.plane !== pl) return;
+  P.plane = null; P.x = pl.x; P.z = pl.z; mode = 'cut'; sfx.fail(); big('CRASHED', sea ? 'Ditched in the sea' : 'The aircraft is a write-off', 'fail', 2800);
+  setTimeout(() => { const t = L('training'); P.x = t.x; P.z = t.z + 4; P.h = 0; P.g.visible = true; P.g.position.set(P.x, 0, P.z); camSnap = true; $('speed').classList.add('hidden'); mode = 'play';
+    toast('Patched up at the Training Centre. Land with the speed up, wings level and a gentle descent.', 6000); }, 2600);
+}
+function planeExit() {
+  const pl = P.plane;
+  if (pl.y <= 0.01) {
+    if (pl.s > 6) { toast('Slow down before getting out – hold <kbd>Space</kbd> for the brakes.'); return; }
+    P.plane = null; pl.state = 'away'; pl.thr = 0; pl.s = 0; const off = pl.fusR + (pl.spec === 'light' ? 1.4 : 2.5);
+    P.x = pl.x + Math.cos(pl.h) * off; P.z = pl.z - Math.sin(pl.h) * off; const [qx, qz] = pushOut(P.x, P.z, 0.45); P.x += qx; P.z += qz; P.h = pl.h;
+    P.g.visible = true; P.g.position.set(P.x, 0, P.z); sfx.door(); $('speed').classList.add('hidden'); placePlane(pl); return;
+  }
+  if (pl.y < 15) { toast('Too low to bail out – climb above 15 m, or land.'); return; }
+  P.plane = null; pl.state = 'bail';
+  P.para = { x: pl.x - Math.sin(pl.h) * 3, y: pl.y - 2, z: pl.z - Math.cos(pl.h) * 3, h: pl.h, vx: Math.sin(pl.h) * pl.s * 0.4, vz: Math.cos(pl.h) * pl.s * 0.4, vy: 0, open: 0 };
+  P.g.visible = true; sfx.door(); noise(0.7, 0.12, 2500); big('BAIL OUT!', TOUCH ? 'Tap ENTER/EXIT to open the parachute' : 'Press F to open the parachute', '', 2400);
+}
+const chute = (() => {
+  const g = new THREE.Group(), t = ctex(256, 64, (x, w, h) => { for (let i = 0; i < 8; i++) { x.fillStyle = i % 2 ? '#ff8c1a' : '#ffffff'; x.fillRect(i * 32, 0, 32, h); } });
+  const can = new THREE.Mesh(new THREE.SphereGeometry(3.4, 16, 6, 0, Math.PI * 2, 0, Math.PI / 2.4), new THREE.MeshLambertMaterial({ map: t, side: THREE.DoubleSide })); can.scale.y = 0.5; can.position.y = 4.4; g.add(can);
+  const pts = []; for (let i = 0; i < 8; i++) { const a = i / 8 * Math.PI * 2; pts.push(new THREE.Vector3(0, 1.5, 0), new THREE.Vector3(Math.cos(a) * 3.0, 4.6, Math.sin(a) * 3.0)); }
+  g.add(new THREE.LineSegments(new THREE.BufferGeometry().setFromPoints(pts), new THREE.LineBasicMaterial({ color: 0x333333 })));
+  g.visible = false; scene.add(g); return g;
+})();
+function openChute(auto) { const q = P.para; if (!q || q.open) return; q.open = 0.02; noise(0.4, 0.15, 900); sfx.ok(); toast(auto ? 'Parachute auto-deployed at 45 m.' : (TOUCH ? 'Parachute open – stick to steer and glide.' : 'Parachute open – <kbd>A</kbd><kbd>D</kbd> steer · <kbd>W</kbd>/<kbd>S</kbd> glide faster / slower.'), 4500); }
+function updatePara(dt) {
+  const q = P.para, f = clamp((keys.KeyW || keys.ArrowUp ? 1 : 0) - (keys.KeyS || keys.ArrowDown ? 1 : 0) - joy.y, -1, 1), t = clamp((keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + joy.x, -1, 1), u = P.g.userData;
+  if (!q.open) {
+    q.vy = Math.max(-48, q.vy - 9.8 * dt); q.vx *= Math.exp(-0.6 * dt); q.vz *= Math.exp(-0.6 * dt); q.h -= t * 1.5 * dt;
+    q.vx += Math.sin(q.h) * Math.max(0, f) * 4 * dt; q.vz += Math.cos(q.h) * Math.max(0, f) * 4 * dt;
+    if (q.y < 45) openChute(true);
+    u.armL.rotation.x = u.armR.rotation.x = -1.4; u.armL.rotation.z = 0.6; u.armR.rotation.z = -0.6; u.legL.rotation.x = 0.3; u.legR.rotation.x = -0.3;
+  } else {
+    q.open = Math.min(1, q.open + dt * 2.5); q.vy += (-4.2 - q.vy) * Math.min(1, dt * 2); q.h -= t * 1.1 * dt;
+    const fs = 7 + f * 3.5; q.vx += (Math.sin(q.h) * fs - q.vx) * Math.min(1, dt * 1.5); q.vz += (Math.cos(q.h) * fs - q.vz) * Math.min(1, dt * 1.5);
+    u.armL.rotation.x = u.armR.rotation.x = -2.9; u.armL.rotation.z = u.armR.rotation.z = 0; u.legL.rotation.x = u.legR.rotation.x = 0;
+  }
+  q.x += q.vx * dt; q.z += q.vz * dt; q.y += q.vy * dt; P.x = q.x; P.z = q.z; P.h = q.h;
+  P.g.position.set(q.x, Math.max(0, q.y), q.z); P.g.rotation.y = q.h; P.g.rotation.x = q.open ? 0 : 1.25;
+  chute.visible = !!q.open; chute.position.set(q.x, Math.max(0, q.y), q.z); chute.rotation.y = q.h; chute.scale.setScalar(Math.max(0.05, q.open));
+  $('speed').innerHTML = `ALT ${Math.max(0, Math.round(q.y))}<small> M · ${q.open ? 'CANOPY OPEN' : 'FREEFALL'}</small>`; $('speed').classList.remove('hidden');
+  $('prompt').classList.add('hidden'); $('stam').classList.add('hidden');
+  if (q.y <= 0) endPara(true);
+}
+function endPara(landed) {
+  const q = P.para; if (!q) return; P.para = null; chute.visible = false; const u = P.g.userData;
+  P.g.rotation.x = 0; u.armL.rotation.set(0, 0, 0); u.armR.rotation.set(0, 0, 0); u.legL.rotation.x = u.legR.rotation.x = 0;
+  const [qx, qz] = pushOut(q.x, q.z, 0.45); P.x = q.x + qx; P.z = q.z + qz; P.g.position.set(P.x, 0, P.z); P.footSp = 0; $('speed').classList.add('hidden');
+  if (!landed) return;
+  const sea = Math.abs(q.x) > 238 || q.z < -262 || q.z > 222;
+  puff(P.x, 0.3, P.z, 1.5, 0xc8bca4, 1, 0.5); toast(sea ? 'Splashdown! You swam back to shore.' : '<b style="color:#5fe36a">Nice landing.</b>', 3500);
+}
+function updatePlanes(dt) {
+  for (const pl of PLANES) {
+    if (pl.state === 'bail') { flyStep(pl, dt, { thrD: -0.3, pitch: -0.3, roll: pl.r >= 0 ? 0.35 : -0.35, brake: true }); if (pl.state === 'bail' && pl.y <= 0 && pl.s < 1) pl.state = 'away'; }
+    else if (pl.state === 'wreck') { pl.t -= dt; if (pl.t <= 0) resetPlane(pl); }
+    else if (pl.state === 'away' && Math.hypot(P.x - pl.x, P.z - pl.z) > 160) resetPlane(pl);
+  }
+  if (flashT > 0) { flashT -= dt; flashS.material.opacity = Math.max(0, flashT / 0.6); flashS.scale.setScalar(10 + (0.6 - flashT) * 50); if (flashT <= 0) flashS.visible = false; }
 }
 
 /* ───────── heat & CAAS inspectors ───────── */
@@ -682,7 +838,7 @@ function updateHeat(dt) {
     if (heat === 0 || i >= heat) { // leave
       driveTo(c, c.x + Math.sin(c.h) * 30, c.z + Math.cos(c.h) * 30, 14, dt); if (d > 110) { removeVeh(c); cops.splice(i, 1); } continue;
     }
-    const los = d < 140 && !segBlocked(c.x, c.z, P.x, P.z); if (los && d < 75) seen = true;
+    const los = d < 140 && !(P.plane && P.plane.y > 25) && !P.para && !segBlocked(c.x, c.z, P.x, P.z); if (los && d < 75) seen = true;
     let tx = P.x, tz = P.z;
     if (!los) { c.ai.pt = (c.ai.pt || 0) - dt; if (c.ai.pt <= 0 || !c.ai.path) { c.ai.pt = 0.6; c.ai.path = bfs(nearestNode(c.x, c.z), nearestNode(P.x, P.z)); } const pth = c.ai.path; if (pth.length > 1) { let k = 0; const p0 = npos(pth[0]); if (Math.hypot(p0.x - c.x, p0.z - c.z) < 9) k = 1; const p = npos(pth[k]); tx = p.x; tz = p.z; } }
     else if (P.veh) { tx += P.veh.vx * 0.5; tz += P.veh.vz * 0.5; }
@@ -705,6 +861,7 @@ function busted() {
   big('BUSTED', fine ? `Licence suspended · -$${fine}` : 'Licence suspended', 'bust', 2800); mode = 'cut'; bustT = 0;
   setTimeout(() => {
     if (P.veh) { P.veh.driver = null; P.veh.in = { thr: 0, steer: 0, hb: 1 }; P.veh = null; P.g.visible = true; }
+    if (P.plane) { resetPlane(P.plane); P.plane = null; P.g.visible = true; } if (P.para) endPara();
     cops.forEach(removeVeh); cops.length = 0; const t = L('training'); P.x = t.x; P.z = t.z + 4; P.h = 0; P.g.position.set(P.x, 0, P.z); camSnap = true;
     const keys2 = Object.keys(FACTS), k = keys2[Math.random() * keys2.length | 0]; unlockFact(k, true);
     showPanel(`<div class="card" style="--tc:#4fa3ff"><div class="ey">Training Centre · Licence suspension review</div><h2>Back to basics</h2>
@@ -756,6 +913,7 @@ const pageRT = PAGE_POS.map(([x, z], i) => {
 /* ───────── missions ───────── */
 let MS = null;
 function startMission(m) {
+  PLANES.forEach(pl => { if (pl.state !== 'parked') resetPlane(pl); });
   MS = { m, k: -1, wrong: 0 }; clearMarkers(); sfx.click();
   big(m.name.toUpperCase(), `${CONTACTS[m.c].name} · ${m.topic ? TOPICS[m.topic].name : 'Final mission'}`, '', 2400);
   setTimeout(() => { if (MS && MS.m === m && MS.k === -1) nextStep(); }, 900);
@@ -810,7 +968,7 @@ function updateTarget(v, dt) {
 function updateMission(dt) {
   if (!MS || MS.k < 0 || MS.done) return; const s = step(); if (!s) return;
   if (MS.timer != null) { MS.timer -= dt; const t = Math.max(0, Math.ceil(MS.timer)); $('timer').textContent = `${(t / 60) | 0}:${String(t % 60).padStart(2, '0')}`; $('timer').classList.toggle('low', t <= 10); if (MS.timer <= 0) { failMission('Out of time'); return; } }
-  const inside = m => Math.hypot(P.x - m.x, P.z - m.z) < m.r;
+  const inside = m => !P.plane && !P.para && Math.hypot(P.x - m.x, P.z - m.z) < m.r;
   if (s.t === 'goto' && MS.goal && inside(MS.goal)) { sfx.ok(); MS.done = true; setTimeout(nextStep, 250); }
   else if (s.t === 'choose') {
     for (const m of MS.opts) { if (!markers.includes(m) || !inside(m)) continue;
@@ -842,24 +1000,25 @@ function passMission() {
   }, 3800);
 }
 function updateContacts(dt) {
+  const air = !!(P.plane || P.para);
   for (const [k, rt] of Object.entries(contactRT)) {
     const act = contactActive(k); rt.lt.visible = act && Math.hypot(P.x - rt.x, P.z - rt.z) > 9; rt.cor.visible = act; rt.cor.material.opacity = 0.25 + Math.sin(now * 3) * 0.1;
     const inside = Math.hypot(P.x - rt.x, P.z - rt.z) < 3.2, enter = inside && !rt.was; rt.was = inside;
-    if (!act || MS || mode !== 'play' || !enter) continue;
+    if (!act || MS || mode !== 'play' || !enter || air) continue;
     if (heat > 0) { toast('Lose your ★ heat first – stay out of sight, or answer at the pink <b style="color:#ff6fc8">R</b> Records Desk.'); continue; }
     if (P.veh) P.veh.vx = P.veh.vz = 0;
     const m = contactMission(k); if (m) startMission(m); else if (k === 'I') openExam();
   }
   // records desk
   const rin = Math.hypot(P.x - recMark.x, P.z - recMark.z) < 3.4, renter = rin && !recMark.was; recMark.was = rin;
-  if (mode === 'play' && renter) {
+  if (mode === 'play' && renter && !air) {
     if (heat === 0) { toast('<b style="color:#ff6fc8">Records Desk</b> – come back with ★ heat and answer a question to clear it.'); }
     else { if (P.veh) P.veh.vx = P.veh.vz = 0; const q = EXAM[Math.random() * EXAM.length | 0];
       panelQuiz(Object.assign({ single: true }, q), ok => { if (ok) { clearHeat(); cops.forEach(c => { c.ai.path = null; }); toast('<b style="color:#5fe36a">Paperwork in order.</b> Heat cleared.'); } else addHeat(1, 'Bad paperwork at the Records Desk'); }, null, 'Records Desk · answer correctly to clear your heat'); }
   }
   // pages
   pageRT.forEach((p, i) => { if (!p) return; p.g.rotation.y += dt * 1.6; p.pg.position.y = 1.6 + Math.sin(now * 2 + i) * 0.2;
-    if (Math.hypot(P.x - p.x, P.z - p.z) < 3.2) { scene.remove(p.g); pageRT[i] = null; save.pages[i] = 1; save.cash += 100; persist(); sfx.page(); hudCash(); const k = PAGES[i]; unlockFact(k, true);
+    if (!air && Math.hypot(P.x - p.x, P.z - p.z) < 3.2) { scene.remove(p.g); pageRT[i] = null; save.pages[i] = 1; save.cash += 100; persist(); sfx.page(); hudCash(); const k = PAGES[i]; unlockFact(k, true);
       const n = Object.keys(save.pages).length; big(`LOGBOOK PAGE ${n}/12`, '+$100', '', 2200); toast(`📓 ${strip(FACTS[k].x)}`, 7000);
       if (n === 12) { save.cash += 1000; persist(); setTimeout(() => big('ALL PAGES FOUND', '+$1000 bonus', '', 3000), 2400); } } });
 }
@@ -953,8 +1112,8 @@ function renderMenu() {
     return `<div class="ey" style="--tc:${o.color};margin-top:14px">${o.name} · ${n}/${ks.length}</div>${ks.map(k => factHTML(k, !save.facts[k])).join('')}`; }).join('');
   else if (menuTab === 'stats') { const s = save.stats, f = Object.keys(save.facts).length, nf = Object.keys(FACTS).length;
     body = `<div class="opts" style="grid-template-columns:repeat(2,1fr)">${[['Missions passed', `${Object.keys(save.done).length}/${MISSIONS.length}`], ['Notebook', `${f}/${nf}`], ['Logbook pages', `${Object.keys(save.pages).length}/12`], ['Cash', '$' + save.cash], ['First-try answers', s.right], ['Wrong answers', s.wrong], ['Vehicles taken', s.jacked], ['Pedestrians bumped', s.peds], ['Times busted', s.busted], ['Licence Board', save.exam ? save.exam + '/10' : '–']].map(([a, b]) => `<div class="ml" style="grid-template-columns:1fr auto"><span class="muted">${a}</span><b>${b}</b></div>`).join('')}</div>`; }
-  else body = `<div class="keys">${TOUCH ? 'Stick: walk / drive (push fully, or hold RUN, to sprint) · ENTER/EXIT: get in or out · BRAKE: handbrake · CAM: camera · ☰: this menu' :
-    '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows – walk or drive · hold <kbd>Shift</kbd> to run (uses stamina)<br><kbd>F</kbd> enter / exit / take a vehicle · <kbd>Space</kbd> handbrake · <kbd>H</kbd> horn<br><kbd>R</kbd> radio (Ramp FM / Tower Talk reads your notebook) · <kbd>C</kbd> camera · mouse wheel zoom<br><kbd>Esc</kbd> missions · <kbd>M</kbd> map · <kbd>N</kbd> notebook'}</div>
+  else body = `<div class="keys">${TOUCH ? 'Stick: walk / drive (push fully, or hold RUN, to sprint) · ENTER/EXIT: get in or out · BRAKE: handbrake · CAM: camera · ☰: this menu<br>Aircraft: ENTER next to a plane · stick to climb/dive and bank (throttle is automatic, BRAKE slows) · ENTER/EXIT in the air to bail out, again to open the parachute' :
+    '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows – walk or drive · hold <kbd>Shift</kbd> to run (uses stamina)<br><kbd>F</kbd> enter / exit / take a vehicle · <kbd>Space</kbd> handbrake · <kbd>H</kbd> horn<br><kbd>R</kbd> radio (Ramp FM / Tower Talk reads your notebook) · <kbd>C</kbd> camera · mouse wheel zoom<br><kbd>Esc</kbd> missions · <kbd>M</kbd> map · <kbd>N</kbd> notebook<br><b>Aircraft</b>: <kbd>F</kbd> next to a plane to board · <kbd>W</kbd>/<kbd>S</kbd> throttle · <kbd>↑</kbd> climb <kbd>↓</kbd> dive · <kbd>A</kbd><kbd>D</kbd> bank · <kbd>Space</kbd> brakes · <kbd>F</kbd> in the air to bail out, <kbd>F</kbd> again to open the parachute'}</div>
     <div class="fact" style="--tc:#ffc83d;margin-top:12px"><b>How it works.</b> Walk or drive into a contact's coloured marker to start a mission. Taking occupied vehicles, hitting pedestrians, ramming inspectors and wrong calls add <b>★ heat</b>: CAAS inspectors chase you. Stay out of sight to lose it, or clear it by answering a question at the pink <b style="color:#ff6fc8">R</b> Records Desk. If they box you in, you're <b>busted</b>. Hidden <b>logbook pages</b> around the island add notebook entries.</div>`;
   showPanel(`<div class="card" style="--tc:#ffc83d"><div class="row sp" style="margin:0"><h2 style="margin:0">Paused</h2><div class="row" style="margin:0"><button class="btn g" id="gfx">Graphics: ${HQ() ? 'High' : 'Low'}</button><button class="btn g" id="mute">${save.mute ? '🔇 Sound off' : '🔊 Sound on'}</button><button class="btn" id="res">Resume ▸</button></div></div>
     <div class="tabs">${tabs.map(([k, n]) => `<button class="tab ${k === menuTab ? 'on' : ''}" data-t="${k}">${n}</button>`).join('')}</div>${body}
@@ -994,7 +1153,7 @@ const W2M = (x, z) => [(x + 250) * MS_SC, (z + 265) * MS_SC];
   const r = (x0, z0, x1, z1, c) => { const [a, b] = W2M(x0, z0), [cc, d] = W2M(x1, z1); x.fillStyle = c; x.fillRect(a, b, cc - a, d - b); };
   r(-238, -262, 238, 212, '#5f9a52'); r(-238, -262, 238, -80, '#9a9ea4'); r(-238, 165, 238, 212, '#d8c890'); r(-229, 205, -221, 222, '#8a6a45'); r(-235, -248, 235, -216, '#4a4e55');
   for (let i = 0; i < NX; i++) r(XL[i] - RH, ZL[0], XL[i] + RH, ZL[NZ - 1], '#3b3f46'); for (let j = 0; j < NZ; j++) r(XL[0], ZL[j] - RH, XL[NX - 1], ZL[j] + RH, ZL[j] <= -80 ? '#7c8188' : '#3b3f46');
-  COL.forEach(c => r(c.x0, c.z0, c.x1, c.z1, c.h > 6 ? '#1d2430' : '#3d4654')); }
+  COL.forEach(c => !c.plane && r(c.x0, c.z0, c.x1, c.z1, c.h > 6 ? '#1d2430' : '#3d4654')); }
 const mini = $('mini'), mx = mini.getContext('2d');
 function routePts() {
   if (!MS || !MS.target) return null; const t = MS.target, a = nearestNode(P.x, P.z), b = nearestNode(t.x, t.z);
@@ -1004,6 +1163,7 @@ function blips() {
   const b = [];
   Object.entries(contactRT).forEach(([k, rt]) => { if (contactActive(k) && !MS) b.push({ x: rt.x, z: rt.z, t: k, c: CONTACTS[k].color }); });
   b.push({ x: recMark.x, z: recMark.z, t: 'R', c: '#ff6fc8', small: true });
+  PLANES.forEach(pl => { if (pl !== P.plane && pl.state !== 'wreck') b.push({ x: pl.x, z: pl.z, t: '✈', c: '#e8eef8', small: true }); });
   markers.forEach(m => b.push({ x: m.x, z: m.z, c: m.color, dot: true }));
   cops.forEach(c => b.push({ x: c.x, z: c.z, c: (now * 4 | 0) % 2 ? '#ff3b3b' : '#3b6bff', dot: true, sm: true }));
   if (MS && MS.chase) b.push({ x: MS.chase.v.x, z: MS.chase.v.z, c: '#ff3b3b', dot: true, big: true });
@@ -1040,7 +1200,17 @@ function drawBigMap(cv) {
 /* ───────── camera ───────── */
 let camYaw = 0, camSnap = true, camZoom = 1;
 const camPos = new THREE.Vector3(), camLook = new THREE.Vector3();
+function camAir(dt) {
+  const pl = P.plane, q = P.para, x = pl ? pl.x : q.x, y = Math.max(0, pl ? pl.y : q.y), z = pl ? pl.z : q.z, h = pl ? pl.h : q.h;
+  camYaw += wrap(h - camYaw) * (camSnap ? 1 : 1 - Math.exp(-dt * 2.2));
+  if (save.cam === 2) { camPos.set(x, y + 80 * camZoom, z + 14); camLook.set(x, y, z); }
+  else { const far = save.cam === 1 ? 1.6 : 1, dist = (pl ? pl.len * 0.9 + 12 : 9) * far * camZoom, ht = (pl ? 3 + pl.len * 0.12 : 3.2) * far * camZoom;
+    camPos.set(x - Math.sin(camYaw) * dist, Math.max(1.5, y + ht), z - Math.cos(camYaw) * dist); camLook.set(x + Math.sin(camYaw) * 6, y + (pl ? 2 : 1.2), z + Math.cos(camYaw) * 6); }
+  if (camSnap) camera.position.copy(camPos); else camera.position.lerp(camPos, 1 - Math.exp(-dt * 6));
+  camera.lookAt(camLook); camSnap = false; camera.fov = 62 + (pl ? Math.min(14, pl.s * 0.12) : q && !q.open ? 10 : 0); camera.updateProjectionMatrix();
+}
 function updateCamera(dt) {
+  if (P.plane || P.para) { camAir(dt); return; }
   const v = P.veh, h = v ? (fwdSpd(v) < -2 ? v.h : v.h) : P.h, x = P.x, z = P.z;
   camYaw += wrap(h - camYaw) * (camSnap ? 1 : 1 - Math.exp(-dt * (v ? 2.8 : 4)));
   const far = save.cam === 1;
@@ -1115,17 +1285,22 @@ function update(dt) {
   updateFX(dt);
   tod = (tod + dt / 30) % 24; if ((now | 0) % 20 === 0 && ((now - dt) | 0) % 20 !== 0) { save.tod = tod; persist(); }
   $('clock').textContent = clockStr();
-  document.body.classList.toggle('inveh', !!P.veh);
+  document.body.classList.toggle('inveh', !!(P.veh || P.plane));
+  updatePlanes(dt);
   updateMission(dt); updateContacts(dt);
   trafficT -= dt; if (trafficT <= 0) { trafficT = 3; const n = vehicles.filter(v => v.ai.role === 'traffic' && v.driver === 'npc').length; if (n < 14 && vehicles.length < 48) spawnTraffic(true, Math.random() < 0.25); }
   // engine note
   if (eng) { const a = AC.currentTime, on = P.veh && mode === 'play'; eng.o.frequency.setTargetAtTime(45 + (P.veh ? Math.abs(fwdSpd(P.veh)) * 3.4 + (P.veh.in.thr > 0 ? 18 : 0) : 0), a, 0.05); eng.g.gain.setTargetAtTime(on ? 0.035 : 0, a, 0.08); }
   if (P.veh) { $('speed').innerHTML = `${Math.round(spd(P.veh) * 3.6)}<small> KM/H</small>`; }
+  else if (P.plane) { const pl = P.plane, stall = pl.y > 0.5 && pl.s < pl.T.stall * 1.12;
+    $('speed').innerHTML = `${Math.round(pl.s * 3.6)}<small> KM/H · ALT ${Math.round(pl.y)} M · THR ${Math.round(pl.thr * 100)}%</small>${stall ? ' <small style="color:#ff4b4b">STALL</small>' : ''}`;
+    if (stall && Math.random() < dt * 3) tone(880, 0.08, 'square', 0.04);
+    if (eng) { eng.o.frequency.setTargetAtTime(70 + pl.s * 1.4 + pl.thr * 70, AC.currentTime, 0.05); eng.g.gain.setTargetAtTime(mode === 'play' ? 0.045 : 0, AC.currentTime, 0.1); } }
   // tower talk radio
   if (P.veh && save.radio === 2) { talkT -= dt; if (talkT <= 0) { talkT = 15; const ks = Object.keys(save.facts).length ? Object.keys(save.facts) : Object.keys(FACTS), k = ks[Math.random() * ks.length | 0], txt = strip(FACTS[k].x);
     $('ticker').innerHTML = `📻 <b>TOWER TALK</b> · ${txt}`; $('ticker').style.opacity = 1; clearTimeout(update.tk); update.tk = setTimeout(() => { $('ticker').style.opacity = 0; }, 9000);
     try { if (window.speechSynthesis && !save.mute) { speechSynthesis.cancel(); const u = new SpeechSynthesisUtterance(txt); u.rate = 1.05; u.volume = 0.8; speechSynthesis.speak(u); } } catch (e) {} } }
-  if (aircraft['9V-VBX']) aircraft['9V-VBX'].userData.prop.rotation.z += dt * 2;
+  if (aircraft['9V-VBX']) { const vbx = PLANES.find(q => q.reg === '9V-VBX'); aircraft['9V-VBX'].userData.prop.rotation.z += dt * (2 + (vbx ? vbx.thr * 45 + (vbx.state === 'player' ? 8 : 0) : 0)); }
 }
 function tick(t) {
   const dt = Math.min(0.05, (t - last) / 1000); last = t;
@@ -1137,5 +1312,5 @@ function tick(t) {
 }
 hudCash(); hudRank(); title(); requestAnimationFrame(tick);
 window.__pw = { P, vehicles, peds, cops, LOC, COL, save, MISSIONS, mode: () => mode, MS: () => MS, heat: () => heat, addHeat, startMission, nextStep, chaseHit, pushOut, enterExit, busted, markers,
-  tp: (x, z) => { if (P.veh) { P.veh.x = x; P.veh.z = z; P.veh.vx = P.veh.vz = 0; } P.x = x; P.z = z; camSnap = true; }, advance: () => subAdvance && subAdvance(), openMenu, pageRT, clearHeat, contactRT, setTod: t => { tod = t; }, tod: () => tod };
+  tp: (x, z) => { if (P.veh) { P.veh.x = x; P.veh.z = z; P.veh.vx = P.veh.vz = 0; } P.x = x; P.z = z; camSnap = true; }, advance: () => subAdvance && subAdvance(), openMenu, pageRT, clearHeat, contactRT, setTod: t => { tod = t; }, tod: () => tod, PLANES, keys, boardPlane };
 })();
