@@ -24,6 +24,11 @@ b{color:#fff}
 #stars{font-size:30px;letter-spacing:2px;line-height:1.1;margin-top:2px;color:#ffffff40}
 #stars i{font-style:normal}#stars i.on{color:#fff}#stars.flash i.on{animation:fl .5s steps(2) infinite}
 @keyframes fl{50%{color:#ffffff40}}
+#clock{font:400 24px var(--big);letter-spacing:2px;color:#fff;margin-top:2px}
+#stam{position:absolute;left:18px;bottom:216px;width:190px;height:9px;background:#000a;border:2px solid #000;border-radius:2px}#stam i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#5fe36a,#c8ff6a)}#stam.winded i{background:#ff4b4b}
+#vig{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,0.38) 100%)}
+body.hq canvas#c{filter:saturate(1.12) contrast(1.06)}
+body.inveh #tR{display:none}body:not(.inveh) #tB,body:not(.inveh) #tH{display:none}
 #rank{font:400 17px var(--big);letter-spacing:1px;color:var(--gold);margin-top:2px}
 #timer{font:400 34px var(--big);color:#fff;margin-top:6px}#timer.low{color:var(--red)}
 #chase{margin-top:6px;font:400 18px var(--big);letter-spacing:1px}
@@ -108,17 +113,21 @@ body.touch #obj{bottom:12px;top:auto;width:calc(100vw - 380px);min-width:220px;f
 body.touch #toast{top:auto;bottom:70px;font-size:13px}
 body.touch #prompt{top:auto;bottom:60px;font-size:14px}
 body.touch #ticker{display:none}
+body.touch #stam{left:12px;top:158px;bottom:auto;width:118px}body.touch #clock{font-size:18px}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
+<div id="vig"></div>
 <div id="hud" class="hidden">
   <canvas id="mini" width="380" height="380"></canvas>
+  <div id="stam" class="hidden"><i id="stamF"></i></div>
   <div id="speed" class="out hidden"></div>
   <div id="tr" class="out">
     <div id="cash">$00000000</div>
     <div id="stars"><i>★</i><i>★</i><i>★</i><i>★</i><i>★</i></div>
     <div id="rank"></div>
+    <div id="clock">17:00</div>
     <div id="timer" class="hidden"></div>
     <div id="chase" class="hidden"><span id="chaseT"></span><div class="bar"><i id="chaseF"></i></div></div>
   </div>
@@ -134,6 +143,7 @@ body.touch #ticker{display:none}
     <button class="tb" id="tF" style="right:24px;bottom:120px;background:#ffc83dcc;color:#000">ENTER<br>EXIT</button>
     <button class="tb" id="tB" style="right:24px;bottom:38px;background:#ff4b4bb0">BRAKE</button>
     <button class="tb" id="tH" style="right:100px;bottom:38px">HORN</button>
+    <button class="tb" id="tR" style="right:100px;bottom:120px;background:#5fe36acc;color:#000">RUN</button>
     <button class="tb" id="tM" style="right:12px;top:12px;width:48px;height:48px">☰</button>
     <button class="tb" id="tC" style="right:68px;top:12px;width:48px;height:48px">CAM</button>
   </div>
