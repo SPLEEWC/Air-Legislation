@@ -343,6 +343,31 @@ airliner(80, -128, '9V-VBD', { len: 38, r: 2.3, span: 40, c1: 0x188b5a, c2: 0x9a
   PLANES.push({ reg: '9V-VBX', type: 'Light aircraft', g, lb, lbY: 6, cols: cs, home: { x, z }, len: 8, span: 11, wingZ: 0.8, fusR: 0.8, spec: 'light' });
   bld(160, -146, 40, 18, 9, 0x8e98a6, 0x6b7380); sign('GA APRON', 160, 12, -136);
 }
+const padMat = (() => { const t = ctex(256, 256, (x, w, h) => { x.clearRect(0, 0, w, h); x.fillStyle = 'rgba(40,44,52,0.95)'; x.beginPath(); x.arc(128, 128, 124, 0, 6.283); x.fill();
+  x.strokeStyle = '#ffd21a'; x.lineWidth = 10; x.beginPath(); x.arc(128, 128, 104, 0, 6.283); x.stroke(); x.fillStyle = '#ffffff'; x.font = '900 150px Arial Black, Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('H', 128, 136); });
+  return new THREE.MeshLambertMaterial({ map: t, transparent: true }); })();
+function heli(x, z, reg, col, label) {
+  const g = new THREE.Group(), P_ = paint(col), dark = M(0x23262b);
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1.5, 18, 12), P_); body.scale.set(1.0, 0.92, 1.65); body.position.set(0, 1.95, 0.3); g.add(body);
+  const glass = new THREE.Mesh(new THREE.SphereGeometry(1.28, 16, 10, 0, Math.PI * 2, 0, Math.PI / 1.9), glassMat); glass.rotation.x = Math.PI / 2.15; glass.position.set(0, 2.1, 1.45); g.add(glass);
+  const boom = cyl(0.26, 0.48, 5.4, P_, 0, 2.25, -3.5, g, 10); boom.rotation.x = Math.PI / 2 - 0.06;
+  box(0.16, 1.5, 0.9, P_, 0, 3.0, -6.05, g); box(1.9, 0.1, 0.55, P_, 0, 2.35, -5.4, g); box(1.6, 0.25, 2.6, dark, 0, 1.15, 0.3, g);
+  const tr = new THREE.Group(); tr.position.set(0.28, 2.95, -6.15); [0, Math.PI / 2].forEach(a => { const b = box(0.05, 1.7, 0.16, dark, 0, 0, 0, tr); b.rotation.x = a; }); g.add(tr);
+  cyl(0.13, 0.13, 0.7, dark, 0, 3.2, 0.3, g, 8);
+  const rotor = new THREE.Group(); rotor.position.set(0, 3.55, 0.3); cyl(0.32, 0.32, 0.2, dark, 0, 0, 0, rotor, 10);
+  for (let i = 0; i < 3; i++) { const bl = new THREE.Group(); bl.rotation.y = i * Math.PI * 2 / 3; box(0.36, 0.06, 5.3, dark, 0, 0, 2.65, bl); rotor.add(bl); } g.add(rotor);
+  const disc = new THREE.Mesh(new THREE.CircleGeometry(5.4, 32), new THREE.MeshBasicMaterial({ color: 0x222222, transparent: true, opacity: 0, depthWrite: false, side: THREE.DoubleSide })); disc.rotation.x = -Math.PI / 2; disc.position.set(0, 3.56, 0.3); g.add(disc);
+  [-1, 1].forEach(sx => { const sk = cyl(0.09, 0.09, 4.6, dark, sx * 1.15, 0.12, 0.4, g, 6); sk.rotation.x = Math.PI / 2; [-0.6, 1.4].forEach(zz => { const st = box(0.08, 0.95, 0.08, dark, sx * 1.0, 0.6, zz, g); st.rotation.z = -sx * 0.25; }); });
+  const bc = box(0.25, 0.18, 0.25, new THREE.MeshBasicMaterial({ color: 0xff2a2a }), 0, 2.95, -1.2, g); blinkers.push(bc);
+  g.position.set(x, 0, z); scene.add(g); flat(15, 15, padMat, x, 0.06, z + 0.3);
+  const lb = textSprite(reg + '\n' + label, { size: 44, scale: 0.05, edge: '#ffc83d' }); lb.position.set(x, 7, z); scene.add(lb);
+  const cs = [addCol(x, z - 0.35, 3.2, 12, 3.2)]; cs.forEach(c => { c.plane = true; });
+  PLANES.push({ reg, type: 'Helicopter', g, lb, lbY: 7, cols: cs, home: { x, z }, len: 11.6, span: 10.8, wingZ: 0.3, fusR: 1.5, spec: 'heli', rotor, tr, disc });
+}
+heli(184, -100, '9V-HVA', 0xd8343a, 'Helicopter');
+{
+  heli(-138, 22, '9V-HVB', 0xf2c200, 'Training helicopter');
+}
 // line maintenance hangar (open front)
 { const cx = -160, cz = -124, w = 54, d = 44, h = 16, c = 0x9aa6b5, wl = M(c);
   box(w, h, 1.5, wl, cx, h / 2, cz - d / 2); addCol(cx, cz - d / 2, w, 1.5, h);
@@ -623,6 +648,7 @@ if (TOUCH) {
   stick.addEventListener('touchend', se); stick.addEventListener('touchcancel', se);
   const hold = (id, dn, up) => { const el = $(id); el.addEventListener('touchstart', e => { e.preventDefault(); au(); dn(); }, { passive: false }); el.addEventListener('touchend', () => up && up()); el.addEventListener('touchcancel', () => up && up()); };
   hold('tR', () => { touchRun = true; }, () => { touchRun = false; });
+  hold('tUp', () => { keys.ArrowUp = true; }, () => { keys.ArrowUp = false; }); hold('tDn', () => { keys.ArrowDown = true; }, () => { keys.ArrowDown = false; });
   hold('tF', () => mode === 'play' && enterExit()); hold('tB', () => { keys.Space = true; }, () => { keys.Space = false; }); hold('tH', () => P.veh && sfx.horn());
   hold('tM', () => mode === 'play' && openMenu('missions')); hold('tC', () => { save.cam = (save.cam + 1) % 3; persist(); });
 }
@@ -677,11 +703,12 @@ function updatePlayer(dt) {
 const PT = {
   light: { name: 'LIGHT AIRCRAFT', stall: 17, max: 55, acc: 9, pitch: 1.0, roll: 2.2, turn: 1.0, heat: 0 },
   a320:  { name: 'AIRBUS A320', stall: 34, max: 95, acc: 7.5, pitch: 0.62, roll: 1.4, turn: 0.75, heat: 2 },
-  heavy: { name: 'WIDEBODY JET', stall: 38, max: 100, acc: 6.5, pitch: 0.52, roll: 1.1, turn: 0.65, heat: 2 }
+  heavy: { name: 'WIDEBODY JET', stall: 38, max: 100, acc: 6.5, pitch: 0.52, roll: 1.1, turn: 0.65, heat: 2 },
+  heli:  { name: 'HELICOPTER', heli: true, stall: 0, max: 34, heat: 0 }
 };
-PLANES.forEach(pl => { Object.assign(pl, { x: pl.home.x, z: pl.home.z, y: 0, h: 0, p: 0, r: 0, s: 0, thr: 0, vy: 0, state: 'parked', T: PT[pl.spec], t: 0 }); pl.g.rotation.order = 'YXZ'; });
+PLANES.forEach(pl => { Object.assign(pl, { x: pl.home.x, z: pl.home.z, y: 0, h: 0, p: 0, r: 0, s: 0, thr: 0, vy: 0, vx: 0, vz: 0, rpm: 0, landed: true, state: 'parked', T: PT[pl.spec], t: 0 }); pl.g.rotation.order = 'YXZ'; });
 function placePlane(pl) { pl.g.position.set(pl.x, pl.y, pl.z); pl.g.rotation.set(-pl.p, pl.h, pl.r); pl.lb.position.set(pl.x, pl.y + pl.lbY, pl.z); pl.lb.visible = pl.state === 'parked'; }
-function resetPlane(pl) { Object.assign(pl, { x: pl.home.x, z: pl.home.z, y: 0, h: 0, p: 0, r: 0, s: 0, thr: 0, vy: 0, state: 'parked', t: 0 }); pl.g.visible = true; pl.cols.forEach(c => { c.off = false; }); placePlane(pl); }
+function resetPlane(pl) { Object.assign(pl, { x: pl.home.x, z: pl.home.z, y: 0, h: 0, p: 0, r: 0, s: 0, thr: 0, vy: 0, vx: 0, vz: 0, rpm: 0, landed: true, state: 'parked', t: 0 }); pl.g.visible = true; pl.cols.forEach(c => { c.off = false; }); placePlane(pl); }
 function nearPlane() {
   let b = null;
   for (const pl of PLANES) {
@@ -697,11 +724,19 @@ function boardPlane(pl) {
   $('speed').classList.remove('hidden'); $('vehN').textContent = `${pl.T.name} · ${pl.reg}`; $('vehR').textContent = ''; $('veh').style.opacity = 1; clearTimeout(showVehName.t); showVehName.t = setTimeout(() => { $('veh').style.opacity = 0; }, 3000);
   if (pl.T.heat) addHeat(pl.T.heat, 'Moving an airliner with no CRS and no crew – CAAS is coming!');
   else toast('Pre-flight check: tech log reviewed, CRS signed, C of A valid – <b>cleared to fly</b>.', 5000);
+  if (pl.T.heli) { help(TOUCH ? 'Stick: fly forward / back and turn · <b>▲ UP</b> / <b>▼ DOWN</b>: climb and descend · <b>ENTER/EXIT</b> in the air: parachute'
+    : '<kbd>↑</kbd> / <kbd>Space</kbd> climb · <kbd>↓</kbd> / <kbd>Shift</kbd> descend · <kbd>W</kbd>/<kbd>S</kbd> forward / back · <kbd>A</kbd><kbd>D</kbd> turn · <kbd>←</kbd><kbd>→</kbd> strafe · <kbd>F</kbd> in the air: parachute. Wait for the rotor to spin up.', 11000); return; }
   help(TOUCH ? 'Stick up/down: climb / dive · stick left/right: bank · throttle is automatic – hold <b>BRAKE</b> to slow · <b>ENTER/EXIT</b> in the air: parachute'
     : '<kbd>W</kbd>/<kbd>S</kbd> throttle · <kbd>↑</kbd> climb · <kbd>↓</kbd> dive · <kbd>A</kbd><kbd>D</kbd> bank / steer · <kbd>Space</kbd> wheel brakes · <kbd>F</kbd> in the air: bail out with a parachute', 10000);
 }
 function flyPlayer(dt) {
   const pl = P.plane;
+  if (pl.T.heli) {
+    heliStep(pl, dt, { fwd: clamp((keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0) - joy.y, -1, 1), turn: clamp((keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0) + joy.x, -1, 1),
+      strafe: (keys.ArrowRight ? 1 : 0) - (keys.ArrowLeft ? 1 : 0), lift: (keys.ArrowUp || keys.Space ? 1 : 0) - (keys.ArrowDown || keys.ShiftLeft || keys.ShiftRight ? 1 : 0) });
+    if (P.plane) { P.x = pl.x; P.z = pl.z; P.h = pl.h; }
+    $('prompt').classList.add('hidden'); $('stam').classList.add('hidden'); return;
+  }
   let thrD = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
   const pitch = clamp((keys.ArrowUp || keys.KeyI ? 1 : 0) - (keys.ArrowDown || keys.KeyK ? 1 : 0) - joy.y, -1, 1), roll = clamp((keys.KeyD || keys.ArrowRight ? 1 : 0) - (keys.KeyA || keys.ArrowLeft ? 1 : 0) + joy.x, -1, 1);
   if (TOUCH) thrD = keys.Space ? -1 : 1;
@@ -762,15 +797,57 @@ function crashPlane(pl, sea) {
   setTimeout(() => { const t = L('training'); P.x = t.x; P.z = t.z + 4; P.h = 0; P.g.visible = true; P.g.position.set(P.x, 0, P.z); camSnap = true; $('speed').classList.add('hidden'); mode = 'play';
     toast('Patched up at the Training Centre. Land with the speed up, wings level and a gentle descent.', 6000); }, 2600);
 }
+function groundAt(pl, x, z) {
+  let g = 0;
+  for (const k of COL) { if (k.off || pl.cols.includes(k) || x < k.x0 || x > k.x1 || z < k.z0 || z > k.z1 || (k.x1 - k.x0) * (k.z1 - k.z0) < 4) continue; if (k.h <= pl.y + 1 && k.h > g) g = k.h; }
+  return g;
+}
+function heliStep(pl, dt, c) {
+  pl.rpm = clamp(pl.rpm + (c.abandon ? -0.2 : 0.45) * dt, 0, 1);
+  const px = pl.x, pz = pl.z, ready = pl.rpm > 0.85, gh0 = groundAt(pl, pl.x, pl.z), onG = pl.y <= gh0 + 0.02;
+  if (!ready && !c.abandon && pl === P.plane && !pl.spinMsg) { pl.spinMsg = 1; toast('Rotor spinning up…'); }
+  if (ready) pl.spinMsg = 0;
+  const tvy = c.abandon ? -12 * (1 - pl.rpm * 0.5) : !ready ? (onG ? 0 : -3) : c.lift > 0 ? c.lift * 9 : c.lift * 7;
+  pl.vy += (tvy - pl.vy) * Math.min(1, dt * 2.2);
+  const air = !onG || pl.vy > 0.5, fx = Math.sin(pl.h), fz = Math.cos(pl.h), rx = -fz, rz = fx;
+  const df = air && ready ? c.fwd * (c.fwd > 0 ? 34 : 12) : 0, ds = air && ready ? c.strafe * 12 : 0, k = Math.min(1, dt * (air ? 0.9 : 4));
+  pl.vx += (fx * df + rx * ds - pl.vx) * k; pl.vz += (fz * df + rz * ds - pl.vz) * k;
+  if (ready || !onG) pl.h -= c.turn * 1.5 * dt;
+  pl.x += pl.vx * dt; pl.z += pl.vz * dt; pl.y = Math.min(300, pl.y + pl.vy * dt); pl.s = Math.hypot(pl.vx, pl.vz);
+  const lf = pl.vx * fx + pl.vz * fz, ls = pl.vx * rx + pl.vz * rz;
+  pl.p += (-lf / 34 * 0.3 - pl.p) * Math.min(1, dt * 3); pl.r += (ls / 12 * 0.25 + c.turn * 0.12 * (air ? 1 : 0) - pl.r) * Math.min(1, dt * 3);
+  // airspace
+  const far = Math.hypot(pl.x, pl.z + 30); if (far > 700) { pl.vx -= pl.x / far * 20 * dt; pl.vz -= (pl.z + 30) / far * 20 * dt; if (pl === P.plane && !pl.warn) { pl.warn = 1; toast('Leaving Vista Bay airspace – turn back.'); } } else pl.warn = 0;
+  // ground / rooftops / sea
+  const gh = groundAt(pl, pl.x, pl.z), sea = Math.abs(pl.x) > 238 || pl.z < -262 || pl.z > 205;
+  if (pl.y <= gh) {
+    if (sea && gh === 0) { crashPlane(pl, true); return; }
+    if (pl.vy < -7.5 || pl.s > 14) { crashPlane(pl, false); return; }
+    if (!pl.landed && pl === P.plane) { toast(gh > 0 ? '<b style="color:#5fe36a">Rooftop landing!</b>' : '<b style="color:#5fe36a">Touchdown.</b>'); sfx.ok(); }
+    pl.y = gh; pl.vy = Math.max(0, pl.vy); pl.vx *= Math.exp(-6 * dt); pl.vz *= Math.exp(-6 * dt); pl.p *= 0.8; pl.r *= 0.8; pl.landed = true;
+  } else pl.landed = false;
+  // nose, tail and rotor tips against anything taller than us
+  const ch = Math.cos(pl.h), sh = Math.sin(pl.h);
+  for (const [lx, lz, dy] of [[0, 2.9, 1.5], [0, -6.3, 2.9], [5.3, 0.3, 3.5], [-5.3, 0.3, 3.5], [0, 5.6, 3.5]]) {
+    const wx = pl.x + lx * ch + lz * sh, wz = pl.z - lx * sh + lz * ch, wy = pl.y + dy;
+    for (const q of COL) {
+      if (q.off || pl.cols.includes(q) || wy > q.h + 0.2 || pl.y >= q.h - 0.6 || wx < q.x0 || wx > q.x1 || wz < q.z0 || wz > q.z1) continue;
+      if (pl.s > 10 || pl.vy < -8) { crashPlane(pl, false); return; }
+      pl.x = px; pl.z = pz; pl.vx = pl.vz = 0; break;
+    }
+  }
+  placePlane(pl);
+}
 function planeExit() {
   const pl = P.plane;
-  if (pl.y <= 0.01) {
+  if (pl.T.heli ? pl.landed : pl.y <= 0.01) {
     if (pl.s > 6) { toast('Slow down before getting out – hold <kbd>Space</kbd> for the brakes.'); return; }
     P.plane = null; pl.state = 'away'; pl.thr = 0; pl.s = 0; const off = pl.fusR + (pl.spec === 'light' ? 1.4 : 2.5);
     P.x = pl.x + Math.cos(pl.h) * off; P.z = pl.z - Math.sin(pl.h) * off; const [qx, qz] = pushOut(P.x, P.z, 0.45); P.x += qx; P.z += qz; P.h = pl.h;
-    P.g.visible = true; P.g.position.set(P.x, 0, P.z); sfx.door(); $('speed').classList.add('hidden'); placePlane(pl); return;
+    P.g.visible = true; P.g.position.set(P.x, 0, P.z); sfx.door(); $('speed').classList.add('hidden'); placePlane(pl);
+    if (pl.y > 0.5) toast('You take the stairs down to the street.'); return;
   }
-  if (pl.y < 15) { toast('Too low to bail out – climb above 15 m, or land.'); return; }
+  if (pl.y - (pl.T.heli ? groundAt(pl, pl.x, pl.z) : 0) < 15) { toast('Too low to bail out – climb above 15 m, or land.'); return; }
   P.plane = null; pl.state = 'bail';
   P.para = { x: pl.x - Math.sin(pl.h) * 3, y: pl.y - 2, z: pl.z - Math.cos(pl.h) * 3, h: pl.h, vx: Math.sin(pl.h) * pl.s * 0.4, vz: Math.cos(pl.h) * pl.s * 0.4, vy: 0, open: 0 };
   P.g.visible = true; sfx.door(); noise(0.7, 0.12, 2500); big('BAIL OUT!', TOUCH ? 'Tap ENTER/EXIT to open the parachute' : 'Press F to open the parachute', '', 2400);
@@ -812,7 +889,9 @@ function endPara(landed) {
 }
 function updatePlanes(dt) {
   for (const pl of PLANES) {
-    if (pl.state === 'bail') { flyStep(pl, dt, { thrD: -0.3, pitch: -0.3, roll: pl.r >= 0 ? 0.35 : -0.35, brake: true }); if (pl.state === 'bail' && pl.y <= 0 && pl.s < 1) pl.state = 'away'; }
+    if (pl.T.heli) { pl.rotor.rotation.y += pl.rpm * dt * 38; pl.tr.rotation.x += pl.rpm * dt * 60; pl.disc.material.opacity = pl.rpm * 0.16; if (pl.state !== 'player' && pl.state !== 'bail') pl.rpm = Math.max(0, pl.rpm - dt * 0.25); }
+    if (pl.state === 'bail' && pl.T.heli) { heliStep(pl, dt, { abandon: true, fwd: 0, strafe: 0, turn: 0.4, lift: 0 }); if (pl.state === 'bail' && pl.landed && pl.s < 1) pl.state = 'away'; }
+    else if (pl.state === 'bail') { flyStep(pl, dt, { thrD: -0.3, pitch: -0.3, roll: pl.r >= 0 ? 0.35 : -0.35, brake: true }); if (pl.state === 'bail' && pl.y <= 0 && pl.s < 1) pl.state = 'away'; }
     else if (pl.state === 'wreck') { pl.t -= dt; if (pl.t <= 0) resetPlane(pl); }
     else if (pl.state === 'away' && Math.hypot(P.x - pl.x, P.z - pl.z) > 160) resetPlane(pl);
   }
@@ -1112,8 +1191,8 @@ function renderMenu() {
     return `<div class="ey" style="--tc:${o.color};margin-top:14px">${o.name} · ${n}/${ks.length}</div>${ks.map(k => factHTML(k, !save.facts[k])).join('')}`; }).join('');
   else if (menuTab === 'stats') { const s = save.stats, f = Object.keys(save.facts).length, nf = Object.keys(FACTS).length;
     body = `<div class="opts" style="grid-template-columns:repeat(2,1fr)">${[['Missions passed', `${Object.keys(save.done).length}/${MISSIONS.length}`], ['Notebook', `${f}/${nf}`], ['Logbook pages', `${Object.keys(save.pages).length}/12`], ['Cash', '$' + save.cash], ['First-try answers', s.right], ['Wrong answers', s.wrong], ['Vehicles taken', s.jacked], ['Pedestrians bumped', s.peds], ['Times busted', s.busted], ['Licence Board', save.exam ? save.exam + '/10' : '–']].map(([a, b]) => `<div class="ml" style="grid-template-columns:1fr auto"><span class="muted">${a}</span><b>${b}</b></div>`).join('')}</div>`; }
-  else body = `<div class="keys">${TOUCH ? 'Stick: walk / drive (push fully, or hold RUN, to sprint) · ENTER/EXIT: get in or out · BRAKE: handbrake · CAM: camera · ☰: this menu<br>Aircraft: ENTER next to a plane · stick to climb/dive and bank (throttle is automatic, BRAKE slows) · ENTER/EXIT in the air to bail out, again to open the parachute' :
-    '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows – walk or drive · hold <kbd>Shift</kbd> to run (uses stamina)<br><kbd>F</kbd> enter / exit / take a vehicle · <kbd>Space</kbd> handbrake · <kbd>H</kbd> horn<br><kbd>R</kbd> radio (Ramp FM / Tower Talk reads your notebook) · <kbd>C</kbd> camera · mouse wheel zoom<br><kbd>Esc</kbd> missions · <kbd>M</kbd> map · <kbd>N</kbd> notebook<br><b>Aircraft</b>: <kbd>F</kbd> next to a plane to board · <kbd>W</kbd>/<kbd>S</kbd> throttle · <kbd>↑</kbd> climb <kbd>↓</kbd> dive · <kbd>A</kbd><kbd>D</kbd> bank · <kbd>Space</kbd> brakes · <kbd>F</kbd> in the air to bail out, <kbd>F</kbd> again to open the parachute'}</div>
+  else body = `<div class="keys">${TOUCH ? 'Stick: walk / drive (push fully, or hold RUN, to sprint) · ENTER/EXIT: get in or out · BRAKE: handbrake · CAM: camera · ☰: this menu<br>Aircraft: ENTER next to a plane · stick to climb/dive and bank (throttle is automatic, BRAKE slows) · ENTER/EXIT in the air to bail out, again to open the parachute<br>Helicopters: stick to fly forward and turn · ▲ UP / ▼ DOWN to climb and descend' :
+    '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows – walk or drive · hold <kbd>Shift</kbd> to run (uses stamina)<br><kbd>F</kbd> enter / exit / take a vehicle · <kbd>Space</kbd> handbrake · <kbd>H</kbd> horn<br><kbd>R</kbd> radio (Ramp FM / Tower Talk reads your notebook) · <kbd>C</kbd> camera · mouse wheel zoom<br><kbd>Esc</kbd> missions · <kbd>M</kbd> map · <kbd>N</kbd> notebook<br><b>Aircraft</b>: <kbd>F</kbd> next to a plane to board · <kbd>W</kbd>/<kbd>S</kbd> throttle · <kbd>↑</kbd> climb <kbd>↓</kbd> dive · <kbd>A</kbd><kbd>D</kbd> bank · <kbd>Space</kbd> brakes · <kbd>F</kbd> in the air to bail out, <kbd>F</kbd> again to open the parachute<br><b>Helicopters</b>: <kbd>↑</kbd>/<kbd>Space</kbd> climb · <kbd>↓</kbd>/<kbd>Shift</kbd> descend · <kbd>W</kbd>/<kbd>S</kbd> forward/back · <kbd>A</kbd><kbd>D</kbd> turn · <kbd>←</kbd><kbd>→</kbd> strafe · land on the ground or a rooftop'}</div>
     <div class="fact" style="--tc:#ffc83d;margin-top:12px"><b>How it works.</b> Walk or drive into a contact's coloured marker to start a mission. Taking occupied vehicles, hitting pedestrians, ramming inspectors and wrong calls add <b>★ heat</b>: CAAS inspectors chase you. Stay out of sight to lose it, or clear it by answering a question at the pink <b style="color:#ff6fc8">R</b> Records Desk. If they box you in, you're <b>busted</b>. Hidden <b>logbook pages</b> around the island add notebook entries.</div>`;
   showPanel(`<div class="card" style="--tc:#ffc83d"><div class="row sp" style="margin:0"><h2 style="margin:0">Paused</h2><div class="row" style="margin:0"><button class="btn g" id="gfx">Graphics: ${HQ() ? 'High' : 'Low'}</button><button class="btn g" id="mute">${save.mute ? '🔇 Sound off' : '🔊 Sound on'}</button><button class="btn" id="res">Resume ▸</button></div></div>
     <div class="tabs">${tabs.map(([k, n]) => `<button class="tab ${k === menuTab ? 'on' : ''}" data-t="${k}">${n}</button>`).join('')}</div>${body}
@@ -1163,7 +1242,7 @@ function blips() {
   const b = [];
   Object.entries(contactRT).forEach(([k, rt]) => { if (contactActive(k) && !MS) b.push({ x: rt.x, z: rt.z, t: k, c: CONTACTS[k].color }); });
   b.push({ x: recMark.x, z: recMark.z, t: 'R', c: '#ff6fc8', small: true });
-  PLANES.forEach(pl => { if (pl !== P.plane && pl.state !== 'wreck') b.push({ x: pl.x, z: pl.z, t: '✈', c: '#e8eef8', small: true }); });
+  PLANES.forEach(pl => { if (pl !== P.plane && pl.state !== 'wreck') b.push({ x: pl.x, z: pl.z, t: pl.T.heli ? 'H' : '✈', c: '#e8eef8', small: true }); });
   markers.forEach(m => b.push({ x: m.x, z: m.z, c: m.color, dot: true }));
   cops.forEach(c => b.push({ x: c.x, z: c.z, c: (now * 4 | 0) % 2 ? '#ff3b3b' : '#3b6bff', dot: true, sm: true }));
   if (MS && MS.chase) b.push({ x: MS.chase.v.x, z: MS.chase.v.z, c: '#ff3b3b', dot: true, big: true });
@@ -1285,13 +1364,17 @@ function update(dt) {
   updateFX(dt);
   tod = (tod + dt / 30) % 24; if ((now | 0) % 20 === 0 && ((now - dt) | 0) % 20 !== 0) { save.tod = tod; persist(); }
   $('clock').textContent = clockStr();
-  document.body.classList.toggle('inveh', !!(P.veh || P.plane));
+  document.body.classList.toggle('inveh', !!(P.veh || P.plane)); document.body.classList.toggle('inheli', !!(P.plane && P.plane.T.heli));
   updatePlanes(dt);
   updateMission(dt); updateContacts(dt);
   trafficT -= dt; if (trafficT <= 0) { trafficT = 3; const n = vehicles.filter(v => v.ai.role === 'traffic' && v.driver === 'npc').length; if (n < 14 && vehicles.length < 48) spawnTraffic(true, Math.random() < 0.25); }
   // engine note
   if (eng) { const a = AC.currentTime, on = P.veh && mode === 'play'; eng.o.frequency.setTargetAtTime(45 + (P.veh ? Math.abs(fwdSpd(P.veh)) * 3.4 + (P.veh.in.thr > 0 ? 18 : 0) : 0), a, 0.05); eng.g.gain.setTargetAtTime(on ? 0.035 : 0, a, 0.08); }
   if (P.veh) { $('speed').innerHTML = `${Math.round(spd(P.veh) * 3.6)}<small> KM/H</small>`; }
+  else if (P.plane && P.plane.T.heli) { const pl = P.plane;
+    $('speed').innerHTML = `${Math.round(pl.s * 3.6)}<small> KM/H · ALT ${Math.round(pl.y)} M · ROTOR ${Math.round(pl.rpm * 100)}%</small>`;
+    if (eng) { eng.o.frequency.setTargetAtTime(45 + pl.rpm * 38 + pl.s * 0.6, AC.currentTime, 0.05); eng.g.gain.setTargetAtTime(mode === 'play' ? 0.03 * pl.rpm : 0, AC.currentTime, 0.1); }
+    update.chop = (update.chop || 0) - dt; if (pl.rpm > 0.15 && update.chop <= 0) { update.chop = 0.11 / pl.rpm; noise(0.06, 0.05 * pl.rpm, 260); } }
   else if (P.plane) { const pl = P.plane, stall = pl.y > 0.5 && pl.s < pl.T.stall * 1.12;
     $('speed').innerHTML = `${Math.round(pl.s * 3.6)}<small> KM/H · ALT ${Math.round(pl.y)} M · THR ${Math.round(pl.thr * 100)}%</small>${stall ? ' <small style="color:#ff4b4b">STALL</small>' : ''}`;
     if (stall && Math.random() < dt * 3) tone(880, 0.08, 'square', 0.04);

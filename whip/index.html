@@ -28,7 +28,7 @@ b{color:#fff}
 #stam{position:absolute;left:18px;bottom:216px;width:190px;height:9px;background:#000a;border:2px solid #000;border-radius:2px}#stam i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#5fe36a,#c8ff6a)}#stam.winded i{background:#ff4b4b}
 #vig{position:fixed;inset:0;pointer-events:none;z-index:1;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,0.38) 100%)}
 body.hq canvas#c{filter:saturate(1.12) contrast(1.06)}
-body.inveh #tR{display:none}body:not(.inveh) #tB,body:not(.inveh) #tH{display:none}
+body.inveh #tR{display:none}body:not(.inheli) #tUp,body:not(.inheli) #tDn{display:none}body.inheli #tB,body.inheli #tH{display:none}body:not(.inveh) #tB,body:not(.inveh) #tH{display:none}
 #rank{font:400 17px var(--big);letter-spacing:1px;color:var(--gold);margin-top:2px}
 #timer{font:400 34px var(--big);color:#fff;margin-top:6px}#timer.low{color:var(--red)}
 #chase{margin-top:6px;font:400 18px var(--big);letter-spacing:1px}
@@ -144,6 +144,8 @@ body.touch #stam{left:12px;top:158px;bottom:auto;width:118px}body.touch #clock{f
     <button class="tb" id="tB" style="right:24px;bottom:38px;background:#ff4b4bb0">BRAKE</button>
     <button class="tb" id="tH" style="right:100px;bottom:38px">HORN</button>
     <button class="tb" id="tR" style="right:100px;bottom:120px;background:#5fe36acc;color:#000">RUN</button>
+    <button class="tb" id="tUp" style="right:100px;bottom:120px;background:#4fc3ffcc;color:#000">▲ UP</button>
+    <button class="tb" id="tDn" style="right:100px;bottom:38px;background:#4fc3ffcc;color:#000">▼ DOWN</button>
     <button class="tb" id="tM" style="right:12px;top:12px;width:48px;height:48px">☰</button>
     <button class="tb" id="tC" style="right:68px;top:12px;width:48px;height:48px">CAM</button>
   </div>
