@@ -7,6 +7,9 @@ Content comes from slides 64–73, 99–104, 110, 116, 121, 125 and 127 of the M
 ## How it plays
 - Explore Vista Bay Airport on foot or in any vehicle (`F` to get in, or to take one; `W A S D` drive, `Space` handbrake).
 - **Run**: hold `Shift` on foot to sprint (on touch: push the stick fully or hold **RUN**). Sprinting drains the stamina bar above the radar; run it empty and you're winded until it recovers.
+- **Fly**: walk up to any of the four aircraft and press `F`. `W`/`S` throttle, `↑` climb, `↓` dive, `A`/`D` bank and steer, `Space` wheel brakes. Reach take-off speed on the long open apron or the runway, then pull up. The light aircraft 9V-VBX is cleared to fly; taking an airliner adds ★★ heat. Land gently (wings level, slow descent) or you crash and wake up at the Training Centre.
+- **Parachute**: press `F` in the air (above 15 m) to bail out, and `F` again to open the parachute (it opens by itself at 45 m). Steer with `A`/`D`, glide faster or slower with `W`/`S`. The abandoned aircraft crashes and is back on its stand a few seconds later. On touch: stick to climb/dive and bank, throttle is automatic (hold BRAKE to slow), ENTER/EXIT to bail out and open the chute.
+- Aircraft are grounded while you're on a mission.
 - Walk or drive into a contact's coloured marker on the radar to start a mission. There are 5 contacts and 9 missions: each mission's cutscene teaches the rules, then you drive to objectives, chase down Pencil Whip vehicles and answer checks (quizzes, select-all, sort).
 - **★ Heat**: taking occupied vehicles, hitting pedestrians, ramming inspectors or making a wrong call sends CAAS inspectors after you. Lose them by staying out of sight, or clear your heat at the pink **R** Records Desk by answering a question. If they box you in, you're busted and sent to the Training Centre for a refresher.
 - Every fact you learn goes into the **Notebook** (`N`). 12 hidden logbook pages add more.
