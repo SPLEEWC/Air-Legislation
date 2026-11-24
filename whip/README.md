@@ -17,6 +17,13 @@ Content comes from slides 64–73, 99–104, 110, 116, 121, 125 and 127 of the M
 - Finish all 9 missions to open the **Licence Board** exam (10 questions, 8 to pass) and earn a certificate.
 - Progress is saved in `localStorage`.
 
+## Design Cay (second island)
+East of Vista Bay, across a bridge (or fly there by plane or helicopter), **Design Cay** teaches SAR Part 21 design approvals from slides 81–89:
+- **T – Dr. Lena Ortiz, Type Certification**: the Design → Production → Flight Test sequence, who issues a TC (State of Design), and CAAS letters of acceptance.
+- **S – Marco Lim, STC Mod Hangar**: major vs minor design changes, what an STC is, who issues it (State of Registry), DOA, and data kept for the life of the product.
+- **P – Priya Nair, STSO Parts Plant**: STSO approval for articles installed on aircraft, DOA or design configuration control, POA and CAAS(AW)95, and data kept for 2 years after production stops.
+- Six missions (sequencing, blind collect, sort, chases off the island), four more hidden logbook pages, and a **Design Board** exam with its own certificate once all six are done. The island's missions are available from the start.
+
 ## Graphics
 - Day–night cycle (one game hour every 30 seconds) with a sunset sky, stars, lit windows, street lamps and headlights at night; the clock is under your cash.
 - Real-time shadows, glossy reflective car paint and glass, animated sea, tyre smoke and skid marks, crash dust, curbs, crossings, shop fronts and rooftop billboards.
