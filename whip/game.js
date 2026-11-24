@@ -15,7 +15,8 @@ const SKEY = 'pw_save';
 let save = { name: '', done: {}, cash: 0, facts: {}, pages: {}, exam: 0, intro: false, cam: 0, mute: false, radio: 1, stats: { busted: 0, jacked: 0, peds: 0, wrong: 0, right: 0 } };
 try { const s = JSON.parse(localStorage.getItem(SKEY) || '{}'); Object.assign(save, s); save.stats = Object.assign({ busted: 0, jacked: 0, peds: 0, wrong: 0, right: 0 }, s.stats || {}); } catch (e) {}
 const persist = () => { try { localStorage.setItem(SKEY, JSON.stringify(save)); } catch (e) {} };
-const mainDone = () => MISSIONS.filter(m => !m.final).filter(m => save.done[m.id]).length;
+const mainDone = () => MISSIONS.filter(m => !m.final && !m.island).filter(m => save.done[m.id]).length;
+const cayDone = () => MISSIONS.filter(m => m.island).every(m => save.done[m.id]);
 const RANKS = [[0, 'Apprentice'], [2, 'Mechanic'], [4, 'B1 Engineer'], [6, 'Certifying Staff'], [8, 'Chief Engineer']];
 const rank = () => save.exam >= 8 ? 'Licence Board Approved' : RANKS.filter(r => mainDone() >= r[0]).pop()[1];
 
@@ -171,13 +172,18 @@ const LOC = {
   hangar: [-160, -89], standA: [-80, -89], standB: [0, -89], standC: [80, -89], ga: [160, -89],
   workshop: [-160, -9], ops: [-80, -9], crew: [0, -9], quality: [66, -9], records: [98, -9], archive: [160, -9],
   training: [-160, 9], caas: [80, 9], pW: [-160, 89], pM: [0, 89], pE: [160, 89],
-  cab0: [136, -42], cab1: [152, -42], cab2: [168, -42], cab3: [184, -42], runway: [215, -232], dock: [-225, 196]
+  cab0: [136, -42], cab1: [152, -42], cab2: [168, -42], cab3: [184, -42], runway: [215, -232], dock: [-225, 196],
+  tcc: [575, -12], modh: [700, -12], plant: [545, 12], doa: [630, -12], prod: [630, 12], vault: [700, 12], ftest: [630, -138],
+  n1: [545, -120], n2: [630, -120], n3: [715, -120], s1: [545, 120], s2: [630, 120], s3: [715, 120],
+  iNW: [500, -120], iNE: [760, -120], iSE: [760, 120], iSW: [500, 120], iW: [500, 0], iE: [760, 0], bE: [468, 0], bW: [250, 0]
 };
 for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) LOC[`n_${i}_${j}`] = [XL[i], ZL[j]];
 const L = k => ({ x: LOC[k][0], z: LOC[k][1] });
 
 /* ───────── colliders ───────── */
 const COL = [];
+const LAND = [{ x0: -238, x1: 238, z0: -262, z1: 205 }, { x0: -229, x1: -221, z0: 200, z1: 222 }, { x0: 230, x1: 480, z0: -8, z1: 8 }, { x0: 470, x1: 790, z0: -150, z1: 150 }];
+const onLand = (x, z) => LAND.some(R => x >= R.x0 && x <= R.x1 && z >= R.z0 && z <= R.z1);
 function addCol(cx, cz, w, d, h = 10) { const c = { x0: cx - w / 2, x1: cx + w / 2, z0: cz - d / 2, z1: cz + d / 2, h }; COL.push(c); return c; }
 function pushOut(x, z, r) {
   let px = 0, pz = 0;
@@ -190,9 +196,10 @@ function pushOut(x, z, r) {
     else { const l = x - c.x0 + r, rr = c.x1 - x + r, t = z - c.z0 + r, b = c.z1 - z + r, m = Math.min(l, rr, t, b);
       if (m === l) { px -= l; x -= l; } else if (m === rr) { px += rr; x += rr; } else if (m === t) { pz -= t; z -= t; } else { pz += b; z += b; } }
   }
-  // island bounds (the jetty pokes out to sea)
-  const zmax = Math.abs(x + 225) < 4 ? 222 : 205;
-  if (x < -238 + r) { px += -238 + r - x; } if (x > 238 - r) { px += 238 - r - x; } if (z < -262 + r) { pz += -262 + r - z; } if (z > zmax - r) { pz += zmax - r - z; }
+  // keep everything on land: Vista Bay, the jetty, the bridge and Design Cay
+  let best = null;
+  for (const R of LAND) { const cx = clamp(x, R.x0 + r, R.x1 - r), cz = clamp(z, R.z0 + r, R.z1 - r), d = (cx - x) ** 2 + (cz - z) ** 2; if (d < 1e-9) { best = null; break; } if (!best || d < best.d) best = { d, cx, cz }; }
+  if (best) { px += best.cx - x; pz += best.cz - z; }
   return [px, pz];
 }
 function segBlocked(x0, z0, x1, z1, minH = 2.5) {
@@ -409,8 +416,39 @@ sign('VISTA BAY MALL', 0, 13, 97, '#4fc3ff');
 [[150, 30], [170, 50], [140, 60], [178, 22], [-60, 28], [-100, 28], [-60, 60], [-100, 60]].forEach(([x, z]) => tree(x, z));
 plane(20, 14, seaMat, 160, 0.05, 44);
 for (let x = -230; x <= 230; x += 26) { if (Math.abs(x + 225) > 10) tree(x + rnd(-4, 4), 176 + rnd(-3, 6), true); }
-for (let z = -60; z <= 150; z += 24) { tree(-224 + rnd(-4, 4), z, true); tree(224 + rnd(-4, 4), z + 10, true); }
+for (let z = -60; z <= 150; z += 24) { tree(-224 + rnd(-4, 4), z, true); if (Math.abs(z + 10) > 14) tree(224 + rnd(-4, 4), z + 10, true); }
 
+/* ───────── Design Cay: second island (SAR Part 21 – TC, STC, STSO) ───────── */
+{
+  plane(332, 312, noiseTex('#e6d6a2', 3000, 0.1, [30, 30]), 630, 0.005, 0);
+  plane(300, 280, noiseTex('#66a85c', 4000, 0.12, [40, 40]), 630, 0.012, 0);
+  // bridge from Vista Bay
+  box(244, 0.6, 16, 0x8d9096, 354, -0.28, 0).userData.flat = true;
+  [-1, 1].forEach(sg => { box(244, 0.9, 0.35, 0xc9ccd1, 354, 0.45, sg * 7.8); });
+  for (let x = 250; x <= 460; x += 30) { box(2.4, 6, 10, 0x7d8188, x, -3.4, 0); }
+  const road = (x0, z0, x1, z1) => { const horiz = z0 === z1, len = horiz ? x1 - x0 : z1 - z0, t = rTex[0].clone(); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, len / 8);
+    const m = plane(RH * 2, len, new THREE.MeshLambertMaterial({ map: t }), (x0 + x1) / 2, 0.05, (z0 + z1) / 2); if (horiz) m.rotation.z = Math.PI / 2; };
+  road(207, 0, 500, 0); road(507, 0, 753, 0); road(507, -120, 753, -120); road(507, 120, 753, 120); road(500, -127, 500, 127); road(760, -127, 760, 127);
+  [[500, -120], [760, -120], [500, 120], [760, 120], [500, 0], [760, 0]].forEach(([x, z]) => plane(RH * 2, RH * 2, 0x363a41, x, 0.055, z));
+  for (let x = 262; x <= 452; x += 38) [-1, 1].forEach(sg => lamp(x, sg * 8.8, 0, -sg));
+  const ds = textSprite('DESIGN CAY ▸\nType Certificate · STC · STSO', { size: 40, scale: 0.06, edge: '#9b8cff' }); ds.position.set(250, 9, 0); scene.add(ds);
+  // flight test strip
+  { const rt = ctex(64, 256, (x, w, h) => { x.fillStyle = '#3f434a'; x.fillRect(0, 0, w, h); x.fillStyle = '#f4f4f4'; x.fillRect(29, 0, 6, 120); }); rt.wrapS = rt.wrapT = THREE.RepeatWrapping; rt.repeat.set(1, 9);
+    const r = plane(18, 250, new THREE.MeshLambertMaterial({ map: rt }), 630, 0.04, -138); r.rotation.z = Math.PI / 2; sign('FLIGHT TEST STRIP', 630, 8, -128, '#ffc83d');
+    cyl(0.1, 0.1, 6, 0xdddddd, 770, 3, -140); const sock = cyl(0.5, 0.2, 2.4, 0xff8c1a, 771.2, 5.6, -140); sock.rotation.z = Math.PI / 2; }
+  // buildings
+  bld(560, -58, 44, 30, 20, 0xb8b2e8, 0x4a4570); sign('TYPE CERTIFICATION CENTRE', 560, 25, -42, '#9b8cff');
+  bld(630, -58, 36, 28, 14, 0xd9dde4); sign('DESIGN OFFICE (DOA)', 630, 19, -43, '#9b8cff');
+  bld(705, -58, 44, 30, 13, 0xe8b27a, 0x6b5a48); sign('STC MOD HANGAR', 705, 18, -42, '#ff9b42');
+  bld(560, 58, 44, 30, 12, 0x9ad9cc, 0x3d5a55); sign('STSO PARTS PLANT', 560, 17, 42, '#3fe0c5'); cyl(1.2, 1.5, 10, 0x8a8f99, 576, 17, 66);
+  bld(630, 58, 36, 28, 10, 0xc7c9cf); sign('PRODUCTION PLANT (POA)', 630, 15, 43, '#3fe0c5');
+  bld(705, 58, 34, 26, 9, 0x8f9db0, 0x3a4352); sign('TECHNICAL DATA VAULT', 705, 14, 44, '#ffc83d');
+  billboard(560, 20, -58, Math.PI, 'DESIGN → PRODUCTION', '→ FLIGHT TEST. In that order.', '#5b4bc4', '#1f1a4d');
+  // palms and trees
+  for (let x = 480; x <= 780; x += 24) { if (Math.abs(x - 505) > 8 && Math.abs(x - 775) > 8) { tree(x + rnd(-3, 3), 140 + rnd(-2, 3), true); } }
+  for (let z = -100; z <= 100; z += 25) { if (Math.abs(z) > 14) { tree(482 + rnd(-2, 2), z, true); tree(778 + rnd(-2, 2), z + 8, true); } }
+  [[600, -30], [665, -30], [600, 30], [665, 30], [740, -30], [520, 30]].forEach(([x, z]) => tree(x, z));
+}
 scene.traverse(o => { if (o.isMesh && !o.userData.flat && o !== skyDome && !(o.material && o.material.transparent) && !(o.material && o.material.isMeshBasicMaterial)) { o.castShadow = true; o.receiveShadow = true; } });
 
 /* ───────── characters ───────── */
@@ -764,15 +802,15 @@ function flyStep(pl, dt, c) {
   if (gnd && vy < 0) vy = 0;
   pl.x += Math.sin(pl.h) * vh * dt; pl.z += Math.cos(pl.h) * vh * dt; pl.y = Math.min(450, pl.y + vy * dt); pl.vy = vy;
   if (pl.y >= 450) pl.p = Math.min(pl.p, 0);
-  const sea = Math.abs(pl.x) > 238 || pl.z < -262 || pl.z > 205;
+  const sea = !onLand(pl.x, pl.z);
   if (pl.y <= 0) {
     if (!gnd && (vy < -8 || Math.abs(pl.r) > 0.5 || pl.p < -0.35 || sea)) { crashPlane(pl, sea); return; }
     if (!gnd && pl === P.plane) { toast('<b style="color:#5fe36a">Touchdown.</b>'); sfx.ok(); }
     pl.y = 0; if (sea) { pl.x = px; pl.z = pz; pl.s = 0; }
   }
   // stay within Vista Bay airspace
-  const far = Math.hypot(pl.x, pl.z + 30);
-  if (far > 700 && !gnd) { const want = Math.atan2(-pl.x, -(pl.z + 30)); pl.h += wrap(want - pl.h) * Math.min(1, dt * 0.8); if (pl === P.plane && !pl.warn) { pl.warn = 1; toast('Leaving Vista Bay airspace – turning back.'); } } else pl.warn = 0;
+  const far = Math.hypot(pl.x - 280, pl.z + 30);
+  if (far > 900 && !gnd) { const want = Math.atan2(280 - pl.x, -(pl.z + 30)); pl.h += wrap(want - pl.h) * Math.min(1, dt * 0.8); if (pl === P.plane && !pl.warn) { pl.warn = 1; toast('Leaving Vista Bay airspace – turning back.'); } } else pl.warn = 0;
   // obstacles: nose, tail and wingtips
   const ch = Math.cos(pl.h), sh = Math.sin(pl.h);
   for (const [lx, lz] of [[0, pl.len / 2], [0, -pl.len / 2], [pl.span / 2, pl.wingZ], [-pl.span / 2, pl.wingZ]]) {
@@ -817,9 +855,9 @@ function heliStep(pl, dt, c) {
   const lf = pl.vx * fx + pl.vz * fz, ls = pl.vx * rx + pl.vz * rz;
   pl.p += (-lf / 34 * 0.3 - pl.p) * Math.min(1, dt * 3); pl.r += (ls / 12 * 0.25 + c.turn * 0.12 * (air ? 1 : 0) - pl.r) * Math.min(1, dt * 3);
   // airspace
-  const far = Math.hypot(pl.x, pl.z + 30); if (far > 700) { pl.vx -= pl.x / far * 20 * dt; pl.vz -= (pl.z + 30) / far * 20 * dt; if (pl === P.plane && !pl.warn) { pl.warn = 1; toast('Leaving Vista Bay airspace – turn back.'); } } else pl.warn = 0;
+  const far = Math.hypot(pl.x - 280, pl.z + 30); if (far > 900) { pl.vx -= (pl.x - 280) / far * 20 * dt; pl.vz -= (pl.z + 30) / far * 20 * dt; if (pl === P.plane && !pl.warn) { pl.warn = 1; toast('Leaving Vista Bay airspace – turn back.'); } } else pl.warn = 0;
   // ground / rooftops / sea
-  const gh = groundAt(pl, pl.x, pl.z), sea = Math.abs(pl.x) > 238 || pl.z < -262 || pl.z > 205;
+  const gh = groundAt(pl, pl.x, pl.z), sea = !onLand(pl.x, pl.z);
   if (pl.y <= gh) {
     if (sea && gh === 0) { crashPlane(pl, true); return; }
     if (pl.vy < -7.5 || pl.s > 14) { crashPlane(pl, false); return; }
@@ -884,7 +922,7 @@ function endPara(landed) {
   P.g.rotation.x = 0; u.armL.rotation.set(0, 0, 0); u.armR.rotation.set(0, 0, 0); u.legL.rotation.x = u.legR.rotation.x = 0;
   const [qx, qz] = pushOut(q.x, q.z, 0.45); P.x = q.x + qx; P.z = q.z + qz; P.g.position.set(P.x, 0, P.z); P.footSp = 0; $('speed').classList.add('hidden');
   if (!landed) return;
-  const sea = Math.abs(q.x) > 238 || q.z < -262 || q.z > 222;
+  const sea = !onLand(q.x, q.z);
   puff(P.x, 0.3, P.z, 1.5, 0xc8bca4, 1, 0.5); toast(sea ? 'Splashdown! You swam back to shore.' : '<b style="color:#5fe36a">Nice landing.</b>', 3500);
 }
 function updatePlanes(dt) {
@@ -975,12 +1013,12 @@ const recMark = (() => { const p = L('records'); const cor = new THREE.Mesh(new 
   const s = textSprite('R', { size: 90, bg: null, fg: '#ff6fc8', scale: 0.05, depth: false }); s.position.set(p.x, 5.2, p.z); scene.add(s); return { x: p.x, z: p.z, cd: 0 }; })();
 function contactMission(k) {
   const list = MISSIONS.filter(m => m.c === k), next = list.find(m => !save.done[m.id]);
-  if (!next) return null; if (k !== 'O' && !save.done.m1) return null; if (next.final && mainDone() < 8) return null; return next;
+  if (!next) return null; if (k !== 'O' && !CONTACTS[k].island && !save.done.m1) return null; if (next.final && mainDone() < 8) return null; return next;
 }
 const examOpen = () => !!save.done.m9;
-function contactActive(k) { return !!contactMission(k) || (k === 'I' && examOpen()); }
+function contactActive(k) { return !!contactMission(k) || (k === 'I' && examOpen()) || (k === 'T' && cayDone()); }
 // hidden logbook pages
-const PAGE_POS = [[-232, -252], [232, -250], [-160, -130], [186, -146], [40, -150], [-196, -72], [196, -76], [-80, 64], [190, 60], [-232, 100], [-225, 218], [200, 196]];
+const PAGE_POS = [[-232, -252], [232, -250], [-160, -130], [186, -146], [40, -150], [-196, -72], [196, -76], [-80, 64], [190, 60], [-232, 100], [-225, 218], [200, 196], [775, -142], [775, 128], [505, 132], [480, -90]];
 const pageRT = PAGE_POS.map(([x, z], i) => {
   if (save.pages[i]) return null;
   const g = new THREE.Group(), pg = box(1.2, 1.6, 0.06, new THREE.MeshBasicMaterial({ color: 0xfff6d8 }), 0, 1.6, 0, g);
@@ -1013,14 +1051,15 @@ function nextStep() {
       if (s.people) { m.npc = makePerson({ shirt: 0x26a65b, vest: 0xd4ff3a, hat: 0xffffff }); m.npc.position.set(p.x, 0, p.z - 1.5); scene.add(m.npc); } return m; });
     MS.target = averageOf(opts.map(o => L(o.loc))); setObj(s.text); MS.timer = s.time;
   }
-  else if (s.t === 'collect') { MS.items = s.items.map(it => { const p = L(it.loc), m = addMarker(p.x, p.z, it.ok ? '#5fe36a' : '#ff4b4b', it.label, { it, r: 4.6, sc: 0.045 }); return m; }); MS.need = s.items.filter(i => i.ok).length; MS.got = 0; setObj(s.text); MS.timer = s.time; MS.target = averageOf(s.items.map(i => L(i.loc))); }
+  else if (s.t === 'collect') { MS.items = s.items.map(it => { const p = L(it.loc), m = addMarker(p.x, p.z, s.blind ? '#ffc83d' : it.ok ? '#5fe36a' : '#ff4b4b', it.label, { it, r: 4.6, sc: 0.045 }); return m; }); MS.need = s.items.filter(i => i.ok).length; MS.got = 0; setObj(s.text); MS.timer = s.time; MS.target = averageOf(s.items.map(i => L(i.loc))); }
   else if (s.t === 'chase') startChase(s);
   if (MS.timer) $('timer').classList.remove('hidden');
 }
 const averageOf = ps => ({ x: ps.reduce((a, p) => a + p.x, 0) / ps.length, z: ps.reduce((a, p) => a + p.z, 0) / ps.length });
 function startChase(s) {
-  const a = L(s.from), b = L(s.to), n0 = nearestNode(a.x, a.z), n1 = nearestNode(b.x, b.z), p0 = npos(n0);
-  const route = bfs(n0, n1).map(npos); route.push(b);
+  let route, p0;
+  if (s.route) { route = s.route.map(L); p0 = route[0]; }
+  else { const a = L(s.from), b = L(s.to), n0 = nearestNode(a.x, a.z), n1 = nearestNode(b.x, b.z); p0 = npos(n0); route = bfs(n0, n1).map(npos); route.push(b); }
   let h = route.length > 1 ? Math.atan2(route[1].x - p0.x, route[1].z - p0.z) : 0;
   vehicles.filter(v => v.driver !== 'player' && Math.hypot(v.x - p0.x, v.z - p0.z) < 9).forEach(v => { if (v.driver === 'cop') cops.splice(cops.indexOf(v), 1); removeVeh(v); });
   const t = spawnVeh(s.veh, p0.x, p0.z, h, 'npc', s.veh === 'van' ? 0x333333 : undefined); t.driver = 'target'; t.ai.role = 'target'; t.ai.route = route; t.ai.k = 1; t.ai.wait = true;
@@ -1047,7 +1086,7 @@ function updateTarget(v, dt) {
 function updateMission(dt) {
   if (!MS || MS.k < 0 || MS.done) return; const s = step(); if (!s) return;
   if (MS.timer != null) { MS.timer -= dt; const t = Math.max(0, Math.ceil(MS.timer)); $('timer').textContent = `${(t / 60) | 0}:${String(t % 60).padStart(2, '0')}`; $('timer').classList.toggle('low', t <= 10); if (MS.timer <= 0) { failMission('Out of time'); return; } }
-  const inside = m => !P.plane && !P.para && Math.hypot(P.x - m.x, P.z - m.z) < m.r;
+  const inside = m => { const i = !P.plane && !P.para && Math.hypot(P.x - m.x, P.z - m.z) < m.r; if (!m.armed) { if (!i) m.armed = true; return false; } return i; };
   if (s.t === 'goto' && MS.goal && inside(MS.goal)) { sfx.ok(); MS.done = true; setTimeout(nextStep, 250); }
   else if (s.t === 'choose') {
     for (const m of MS.opts) { if (!markers.includes(m) || !inside(m)) continue;
@@ -1074,8 +1113,10 @@ function passMission() {
   setTimeout(() => {
     if (m.id === 'm1') help('New contacts on your radar: <b style="color:#7dff8a">C</b> Chief Engineer, <b style="color:#ffcf3f">Q</b> Quality, <b style="color:#ff7ad9">K</b> Captain.', 8000);
     else if (m.final) help('<b style="color:#ff5252">I</b> at the CAAS Office: the <b>Licence Board</b> exam is open.', 8000);
+    else if (m.island && cayDone()) help('Design Cay complete! <b style="color:#9b8cff">T</b> – Dr. Ortiz – has the <b>Design Board</b> exam.', 8000);
+    else if (m.island) { const nx = ['T', 'S', 'P'].find(k => contactMission(k)); if (nx) help(`Next on Design Cay: <b style="color:${CONTACTS[nx].color}">${nx}</b> – ${CONTACTS[nx].name}.`, 6000); }
     else if (mainDone() === 8) help('All contacts done! <b style="color:#ff5252">I</b> – Inspector Farah at the CAAS Office – has the final job.', 8000);
-    else { const nx = Object.keys(CONTACTS).find(k => contactMission(k)); if (nx) help(`Next: <b style="color:${CONTACTS[nx].color}">${nx}</b> – ${CONTACTS[nx].name} (${CONTACTS[nx].role}).`, 6000); }
+    else { const nx = Object.keys(CONTACTS).find(k => !CONTACTS[k].island && contactMission(k)); if (nx) help(`Next: <b style="color:${CONTACTS[nx].color}">${nx}</b> – ${CONTACTS[nx].name} (${CONTACTS[nx].role}).`, 6000); }
   }, 3800);
 }
 function updateContacts(dt) {
@@ -1086,7 +1127,7 @@ function updateContacts(dt) {
     if (!act || MS || mode !== 'play' || !enter || air) continue;
     if (heat > 0) { toast('Lose your ★ heat first – stay out of sight, or answer at the pink <b style="color:#ff6fc8">R</b> Records Desk.'); continue; }
     if (P.veh) P.veh.vx = P.veh.vz = 0;
-    const m = contactMission(k); if (m) startMission(m); else if (k === 'I') openExam();
+    const m = contactMission(k); if (m) startMission(m); else if (k === 'I') openExam(); else if (k === 'T') openExam('design');
   }
   // records desk
   const rin = Math.hypot(P.x - recMark.x, P.z - recMark.z) < 3.4, renter = rin && !recMark.was; recMark.was = rin;
@@ -1098,8 +1139,8 @@ function updateContacts(dt) {
   // pages
   pageRT.forEach((p, i) => { if (!p) return; p.g.rotation.y += dt * 1.6; p.pg.position.y = 1.6 + Math.sin(now * 2 + i) * 0.2;
     if (!air && Math.hypot(P.x - p.x, P.z - p.z) < 3.2) { scene.remove(p.g); pageRT[i] = null; save.pages[i] = 1; save.cash += 100; persist(); sfx.page(); hudCash(); const k = PAGES[i]; unlockFact(k, true);
-      const n = Object.keys(save.pages).length; big(`LOGBOOK PAGE ${n}/12`, '+$100', '', 2200); toast(`📓 ${strip(FACTS[k].x)}`, 7000);
-      if (n === 12) { save.cash += 1000; persist(); setTimeout(() => big('ALL PAGES FOUND', '+$1000 bonus', '', 3000), 2400); } } });
+      const n = Object.keys(save.pages).length; big(`LOGBOOK PAGE ${n}/${PAGES.length}`, '+$100', '', 2200); toast(`📓 ${strip(FACTS[k].x)}`, 7000);
+      if (n === PAGES.length) { save.cash += 1000; persist(); setTimeout(() => big('ALL PAGES FOUND', '+$1000 bonus', '', 3000), 2400); } } });
 }
 
 /* ───────── UI: HUD helpers ───────── */
@@ -1185,12 +1226,13 @@ function renderMenu() {
   let body = '';
   if (menuTab === 'missions') body = Object.entries(CONTACTS).map(([k, c]) => `<div class="ey" style="--tc:${c.color};margin-top:12px">${k} · ${c.name} – ${c.role}</div>` + MISSIONS.filter(m => m.c === k).map(m => { const st = save.done[m.id] ? '✅ Passed' : contactMission(k) === m ? '▶ Available' : '🔒 Locked';
     return `<div class="ml"><span class="l" style="background:${c.color}">${k}</span><span><b>${m.name}</b> <span class="muted">· ${m.topic ? TOPICS[m.topic].name : 'All four topics'}</span></span><span>${st}</span></div>`; }).join('')).join('')
-    + `<div class="ml" style="margin-top:12px"><span class="l" style="background:#ff5252">L</span><span><b>Licence Board exam</b> <span class="muted">· CAAS Office</span></span><span>${save.exam >= 8 ? `✅ ${save.exam}/10` : examOpen() ? '▶ Available' : '🔒 After the final mission'}</span></div>`;
-  else if (menuTab === 'map') body = '<canvas id="bigmap" width="900" height="900" style="width:100%;max-width:640px;display:block;margin:auto;border-radius:6px"></canvas><div class="muted" style="text-align:center;margin-top:6px">Coloured letters = contacts · ★ yellow = current objective · R = Records Desk · white arrow = you</div>';
+      + `<div class="ml" style="margin-top:12px"><span class="l" style="background:#ff5252">L</span><span><b>Licence Board exam</b> <span class="muted">· CAAS Office</span></span><span>${save.exam >= 8 ? `✅ ${save.exam}/10` : examOpen() ? '▶ Available' : '🔒 After the final mission'}</span></div>`
+      + `<div class="ml"><span class="l" style="background:#9b8cff">B</span><span><b>Design Board exam</b> <span class="muted">· Design Cay, Dr. Ortiz</span></span><span>${(save.exam2 || 0) >= 8 ? `✅ ${save.exam2}/10` : cayDone() ? '▶ Available' : '🔒 After the six Design Cay missions'}</span></div>`;
+  else if (menuTab === 'map') body = '<canvas id="bigmap" width="1050" height="500" style="width:100%;display:block;margin:auto;border-radius:6px"></canvas><div class="muted" style="text-align:center;margin-top:6px">Coloured letters = contacts · ★ yellow = current objective · R = Records Desk · white arrow = you</div>';
   else if (menuTab === 'notebook') body = Object.entries(TOPICS).map(([t, o]) => { const ks = Object.keys(FACTS).filter(k => FACTS[k].t === t), n = ks.filter(k => save.facts[k]).length;
     return `<div class="ey" style="--tc:${o.color};margin-top:14px">${o.name} · ${n}/${ks.length}</div>${ks.map(k => factHTML(k, !save.facts[k])).join('')}`; }).join('');
   else if (menuTab === 'stats') { const s = save.stats, f = Object.keys(save.facts).length, nf = Object.keys(FACTS).length;
-    body = `<div class="opts" style="grid-template-columns:repeat(2,1fr)">${[['Missions passed', `${Object.keys(save.done).length}/${MISSIONS.length}`], ['Notebook', `${f}/${nf}`], ['Logbook pages', `${Object.keys(save.pages).length}/12`], ['Cash', '$' + save.cash], ['First-try answers', s.right], ['Wrong answers', s.wrong], ['Vehicles taken', s.jacked], ['Pedestrians bumped', s.peds], ['Times busted', s.busted], ['Licence Board', save.exam ? save.exam + '/10' : '–']].map(([a, b]) => `<div class="ml" style="grid-template-columns:1fr auto"><span class="muted">${a}</span><b>${b}</b></div>`).join('')}</div>`; }
+    body = `<div class="opts" style="grid-template-columns:repeat(2,1fr)">${[['Missions passed', `${Object.keys(save.done).length}/${MISSIONS.length}`], ['Notebook', `${f}/${nf}`], ['Logbook pages', `${Object.keys(save.pages).length}/${PAGES.length}`], ['Cash', '$' + save.cash], ['First-try answers', s.right], ['Wrong answers', s.wrong], ['Vehicles taken', s.jacked], ['Pedestrians bumped', s.peds], ['Times busted', s.busted], ['Licence Board', save.exam ? save.exam + '/10' : '–'], ['Design Board', save.exam2 ? save.exam2 + '/10' : '–']].map(([a, b]) => `<div class="ml" style="grid-template-columns:1fr auto"><span class="muted">${a}</span><b>${b}</b></div>`).join('')}</div>`; }
   else body = `<div class="keys">${TOUCH ? 'Stick: walk / drive (push fully, or hold RUN, to sprint) · ENTER/EXIT: get in or out · BRAKE: handbrake · CAM: camera · ☰: this menu<br>Aircraft: ENTER next to a plane · stick to climb/dive and bank (throttle is automatic, BRAKE slows) · ENTER/EXIT in the air to bail out, again to open the parachute<br>Helicopters: stick to fly forward and turn · ▲ UP / ▼ DOWN to climb and descend' :
     '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows – walk or drive · hold <kbd>Shift</kbd> to run (uses stamina)<br><kbd>F</kbd> enter / exit / take a vehicle · <kbd>Space</kbd> handbrake · <kbd>H</kbd> horn<br><kbd>R</kbd> radio (Ramp FM / Tower Talk reads your notebook) · <kbd>C</kbd> camera · mouse wheel zoom<br><kbd>Esc</kbd> missions · <kbd>M</kbd> map · <kbd>N</kbd> notebook<br><b>Aircraft</b>: <kbd>F</kbd> next to a plane to board · <kbd>W</kbd>/<kbd>S</kbd> throttle · <kbd>↑</kbd> climb <kbd>↓</kbd> dive · <kbd>A</kbd><kbd>D</kbd> bank · <kbd>Space</kbd> brakes · <kbd>F</kbd> in the air to bail out, <kbd>F</kbd> again to open the parachute<br><b>Helicopters</b>: <kbd>↑</kbd>/<kbd>Space</kbd> climb · <kbd>↓</kbd>/<kbd>Shift</kbd> descend · <kbd>W</kbd>/<kbd>S</kbd> forward/back · <kbd>A</kbd><kbd>D</kbd> turn · <kbd>←</kbd><kbd>→</kbd> strafe · land on the ground or a rooftop'}</div>
     <div class="fact" style="--tc:#ffc83d;margin-top:12px"><b>How it works.</b> Walk or drive into a contact's coloured marker to start a mission. Taking occupied vehicles, hitting pedestrians, ramming inspectors and wrong calls add <b>★ heat</b>: CAAS inspectors chase you. Stay out of sight to lose it, or clear it by answering a question at the pink <b style="color:#ff6fc8">R</b> Records Desk. If they box you in, you're <b>busted</b>. Hidden <b>logbook pages</b> around the island add notebook entries.</div>`;
@@ -1207,17 +1249,18 @@ function renderMenu() {
 }
 
 /* ───────── exam & certificate ───────── */
-function openExam() {
-  const qs = shuffle(EXAM).slice(0, 10); let i = 0, score = 0; const missed = [];
+function openExam(kind) {
+  const D = kind === 'design', bank = D ? DEXAM : EXAM, board = D ? 'Design Board' : 'Licence Board', key = D ? 'exam2' : 'exam';
+  const qs = shuffle(bank).slice(0, 10); let i = 0, score = 0; const missed = [];
   const ask = () => {
     if (i >= qs.length) return result(); const s = qs[i];
-    panelQuiz(Object.assign({ single: true }, s), ok => { if (ok) score++; else missed.push(s); i++; setTimeout(ask, 0); }, null, `Licence Board · Question ${i + 1} of ${qs.length} · Score ${score}`);
+    panelQuiz(Object.assign({ single: true }, s), ok => { if (ok) score++; else missed.push(s); i++; setTimeout(ask, 0); }, null, `${board} · Question ${i + 1} of ${qs.length} · Score ${score}`);
   };
   const result = () => {
-    const pass = score >= 8; if (score > save.exam) save.exam = score; persist(); pass ? sfx.pass() : sfx.fail(); hudRank();
-    showPanel(`<div class="card" style="--tc:#ff5252"><div class="ey">CAAS Licence Board</div><h2>${pass ? 'Approved' : 'Not yet'} · ${score}/10</h2>
+    const pass = score >= 8; if (score > (save[key] || 0)) save[key] = score; persist(); pass ? sfx.pass() : sfx.fail(); hudRank();
+    showPanel(`<div class="card" style="--tc:${D ? '#9b8cff' : '#ff5252'}"><div class="ey">${D ? 'Design Cay · Design Board' : 'CAAS Licence Board'}</div><h2>${pass ? 'Approved' : 'Not yet'} · ${score}/10</h2>
       ${pass ? `<div class="cert"><div class="ey" style="--tc:#ffc83d">Certificate of completion</div><div style="margin-top:8px">This certifies that</div><div class="nm">${esc(save.name || 'Engineer')}</div>
-      <div>completed <b>PENCIL WHIP</b> and passed the Licence Board with <b>${score}/10</b><br><span class="muted">Aircraft Maintenance · Certificate of Release to Service · Certificate of Maintenance Review · Technical Log</span></div></div>` : '<div class="muted">You need 8 out of 10. Review the Notebook (N), then talk to Inspector Farah again.</div>'}
+      <div>completed <b>PENCIL WHIP${D ? ' – DESIGN CAY' : ''}</b> and passed the ${board} with <b>${score}/10</b><br><span class="muted">${D ? 'Type Certificate · Supplemental Type Certificate · Singapore Technical Standard Order' : 'Aircraft Maintenance · Certificate of Release to Service · Certificate of Maintenance Review · Technical Log'}</span></div></div>` : `<div class="muted">You need 8 out of 10. Review the Notebook (N), then talk to ${D ? 'Dr. Ortiz' : 'Inspector Farah'} again.</div>`}
       ${missed.length ? `<div class="ey" style="margin-top:14px">Review these</div>${missed.map(q => `<div class="fact" style="--tc:#ff4b4b"><b>${q.q}</b><br>✔ ${q.a} <span class="muted">– ${q.why} (${q.s})</span></div>`).join('')}` : ''}
       <div class="row sp"><span class="muted">${pass ? 'The island is yours – keep exploring and finding logbook pages.' : ''}</span><button class="btn" id="go">Back to the island ▸</button></div></div>`);
     $('go').onclick = () => { sfx.click(); hidePanel(); };
@@ -1226,12 +1269,14 @@ function openExam() {
 }
 
 /* ───────── minimap ───────── */
-const MAPC = document.createElement('canvas'); MAPC.width = MAPC.height = 1000; const MS_SC = 2; // px per metre; world x -250..250, z -265..235
+const MAPC = document.createElement('canvas'); MAPC.width = 2100; MAPC.height = 1000; const MS_SC = 2; // px per metre; world x -250..800, z -265..235
 const W2M = (x, z) => [(x + 250) * MS_SC, (z + 265) * MS_SC];
-{ const x = MAPC.getContext('2d'); x.fillStyle = '#2b6fa5'; x.fillRect(0, 0, 1000, 1000);
+{ const x = MAPC.getContext('2d'); x.fillStyle = '#2b6fa5'; x.fillRect(0, 0, 2100, 1000);
   const r = (x0, z0, x1, z1, c) => { const [a, b] = W2M(x0, z0), [cc, d] = W2M(x1, z1); x.fillStyle = c; x.fillRect(a, b, cc - a, d - b); };
   r(-238, -262, 238, 212, '#5f9a52'); r(-238, -262, 238, -80, '#9a9ea4'); r(-238, 165, 238, 212, '#d8c890'); r(-229, 205, -221, 222, '#8a6a45'); r(-235, -248, 235, -216, '#4a4e55');
   for (let i = 0; i < NX; i++) r(XL[i] - RH, ZL[0], XL[i] + RH, ZL[NZ - 1], '#3b3f46'); for (let j = 0; j < NZ; j++) r(XL[0], ZL[j] - RH, XL[NX - 1], ZL[j] + RH, ZL[j] <= -80 ? '#7c8188' : '#3b3f46');
+  r(470, -150, 790, 150, '#d8c890'); r(484, -136, 776, 136, '#5f9a52'); r(230, -8, 480, 8, '#3b3f46'); r(505, -147, 755, -129, '#4a4e55');
+  [[232, -7, 500, 7], [500, -7, 760, 7], [500, -127, 760, -113], [500, 113, 760, 127], [493, -127, 507, 127], [753, -127, 767, 127]].forEach(q => r(q[0], q[1], q[2], q[3], '#3b3f46'));
   COL.forEach(c => !c.plane && r(c.x0, c.z0, c.x1, c.z1, c.h > 6 ? '#1d2430' : '#3d4654')); }
 const mini = $('mini'), mx = mini.getContext('2d');
 function routePts() {
@@ -1266,9 +1311,9 @@ function drawMini() {
   mx.fillStyle = '#000'; mx.beginPath(); mx.arc(ax, ay, 14, 0, 6.283); mx.fill(); mx.fillStyle = '#fff'; mx.font = '900 20px Arial'; mx.textAlign = 'center'; mx.textBaseline = 'middle'; mx.fillText('N', ax, ay + 1);
 }
 function drawBigMap(cv) {
-  const x = cv.getContext('2d'), k = cv.width / 1000; x.drawImage(MAPC, 0, 0, cv.width, cv.height);
+  const x = cv.getContext('2d'), k = cv.width / MAPC.width; x.drawImage(MAPC, 0, 0, cv.width, cv.height);
   const at = (wx, wz) => { const [a, b] = W2M(wx, wz); return [a * k, b * k]; };
-  [['Hangar', -160, -124], ['Stand A', -80, -100], ['Stand B', 0, -100], ['Stand C', 80, -100], ['GA Apron', 160, -100], ['Workshop', -160, -52], ['Ops Centre', -80, -50], ['Crew Centre', 0, -52], ['Quality', 80, -52], ['Log Book Archive', 160, -66], ['Training Centre', -160, 52], ['CAAS Office', 80, 54], ['Car park', -80, 44], ['Mall', 0, 120], ['Runway', 0, -232], ['Jetty', -225, 200]].forEach(([n, wx, wz]) => {
+  [['Hangar', -160, -124], ['Stand A', -80, -100], ['Stand B', 0, -100], ['Stand C', 80, -100], ['GA Apron', 160, -100], ['Workshop', -160, -52], ['Ops Centre', -80, -50], ['Crew Centre', 0, -52], ['Quality', 80, -52], ['Log Book Archive', 160, -66], ['Training Centre', -160, 52], ['CAAS Office', 80, 54], ['Car park', -80, 44], ['Mall', 0, 120], ['Runway', 0, -232], ['Jetty', -225, 200], ['Bridge', 355, -14], ['DESIGN CAY', 630, -100], ['TC Centre', 560, -58], ['DOA', 630, -58], ['STC Hangar', 705, -58], ['STSO Plant', 560, 58], ['Production', 630, 58], ['Data Vault', 705, 58], ['Test Strip', 630, -138]].forEach(([n, wx, wz]) => {
     const [a, b] = at(wx, wz); x.font = '700 15px Segoe UI, Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineWidth = 4; x.strokeStyle = '#000'; x.strokeText(n, a, b); x.fillStyle = '#fff'; x.fillText(n, a, b); });
   const rp = routePts(); if (rp) { x.strokeStyle = '#ff6fc8'; x.lineWidth = 5; x.beginPath(); rp.forEach(([wx, wz], i) => { const [a, b] = at(wx, wz); i ? x.lineTo(a, b) : x.moveTo(a, b); }); x.stroke(); }
   blips().forEach(b => { const [a, c] = at(b.x, b.z); if (b.dot) { x.fillStyle = b.c; x.beginPath(); x.arc(a, c, 9, 0, 6.283); x.fill(); x.strokeStyle = '#000'; x.lineWidth = 2; x.stroke(); } else { x.fillStyle = '#000'; x.beginPath(); x.arc(a, c, 15, 0, 6.283); x.fill(); x.fillStyle = b.c; x.font = '900 20px Impact, Arial Black'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(b.t, a, c + 1); } });
@@ -1318,7 +1363,7 @@ function title() {
       <div class="opts" style="grid-template-columns:repeat(2,1fr);margin-top:12px">${Object.entries(TOPICS).map(([k, t]) => { const ks = Object.keys(FACTS).filter(f => FACTS[f].t === k), n = ks.filter(f => save.facts[f]).length; return `<div class="ml" style="grid-template-columns:auto 1fr auto"><span style="width:12px;height:12px;border-radius:50%;background:${t.color}"></span><b>${t.name}</b><span class="muted">${n}/${ks.length}</span></div>`; }).join('')}</div>
       <div class="row"><input type="text" id="nm" maxlength="18" placeholder="Your name (for the certificate)" value="${esc(save.name)}" autocomplete="off" style="flex:1;min-width:200px"></div>
       <div class="keys" style="margin-top:10px">${TOUCH ? 'Left stick: walk/drive · RUN: sprint · ENTER/EXIT button: get in vehicles · BRAKE: handbrake' : '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk / drive · <kbd>Shift</kbd> run · <kbd>F</kbd> enter or take a vehicle · <kbd>Space</kbd> handbrake · <kbd>Esc</kbd> menu · <kbd>M</kbd> map · <kbd>N</kbd> notebook'}</div>
-      <div class="row sp"><span class="muted">${started ? `${Object.keys(save.done).length}/${MISSIONS.length} missions · $${save.cash} · progress saved on this device` : '9 missions · 12 hidden logbook pages · final Licence Board'}</span>
+      <div class="row sp"><span class="muted">${started ? `${Object.keys(save.done).length}/${MISSIONS.length} missions · $${save.cash} · progress saved on this device` : `${MISSIONS.length} missions on two islands · ${PAGES.length} hidden logbook pages · two exams`}</span>
       <div class="row" style="margin:0">${started ? '<button class="btn g" id="reset">New game</button>' : ''}<button class="btn" id="start" style="font-size:24px;padding:12px 30px">${started ? 'Continue ▸' : 'Start ▸'}</button></div></div>
     </div></div>`);
   mode = 'title';
@@ -1333,16 +1378,17 @@ function begin() {
       ['N', 'Vista Bay Airport. Aircraft come and go – and every one needs its maintenance done properly, and signed for properly.'],
       ['N', 'But a crew called <b>PENCIL WHIP</b> has been signing off work that was never done.'],
       ['N', "You're a newly licensed aircraft engineer. Work for the contacts on your radar, learn the rules, and shut Pencil Whip down."],
-      ['N', "Drive anything – press <b>F</b> near a vehicle. Break the rules and <b>CAAS inspectors</b> come after you <b style=\"color:#ff4b4b\">★</b>."]
+      ['N', "Drive anything – press <b>F</b> near a vehicle. Break the rules and <b>CAAS inspectors</b> come after you <b style=\"color:#ff4b4b\">★</b>."],
+      ['N', "And east across the bridge lies <b>Design Cay</b> – the island where aircraft designs get approved: Type Certificates, STCs and STSOs."]
     ], () => { save.intro = true; persist(); help('Head to <b style="color:#4fc3ff">O</b> on your radar – Rina at the <b>Ops Centre</b>. Walk into her blue marker.', 9000); });
-  } else { const nx = Object.keys(CONTACTS).find(k => contactMission(k)); if (nx) help(`Next: <b style="color:${CONTACTS[nx].color}">${nx}</b> – ${CONTACTS[nx].name}.`, 6000); }
+  } else { const nx = Object.keys(CONTACTS).find(k => !CONTACTS[k].island && contactMission(k)); if (nx) help(`Next: <b style="color:${CONTACTS[nx].color}">${nx}</b> – ${CONTACTS[nx].name}.`, 6000); }
 }
 
 /* ───────── world population ───────── */
 { const t = L('training'); P.x = t.x - 4; P.z = t.z + 4; P.h = Math.PI * 0.75; }
 spawnVeh('van', -150, 14, -Math.PI / 2); spawnVeh('sedan', -172, 14, Math.PI / 2, null, 0xd8343a);
 spawnVeh('follow', -138, -94, Math.PI / 2); spawnVeh('tug', -62, -96, Math.PI / 2); spawnVeh('tug', 18, -96, -Math.PI / 2); spawnVeh('cart', 100, -96, Math.PI / 2); spawnVeh('truck', 140, -96, -Math.PI / 2);
-spawnVeh('van', -100, -14, 0); spawnVeh('cart', 46, -14, Math.PI); spawnVeh('caas', 64, 16, Math.PI / 2); spawnVeh('caas', 96, 16, -Math.PI / 2);
+spawnVeh('van', -100, -14, 0); spawnVeh('van', 600, 22, Math.PI / 2); spawnVeh('sedan', 668, -22, -Math.PI / 2, null, 0x5b4bc4); spawnVeh('follow', 520, -132, Math.PI / 2); spawnVeh('cart', 46, -14, Math.PI); spawnVeh('caas', 64, 16, Math.PI / 2); spawnVeh('caas', 96, 16, -Math.PI / 2);
 for (let i = 0; i < 4; i++) for (let k = 0; k < 2; k++) if (Math.random() < 0.8) spawnVeh(Math.random() < 0.2 ? 'van' : 'sedan', -98 + i * 9, 36 + k * 16, k ? Math.PI : 0);
 for (let i = 0; i < 12; i++) spawnTraffic(false, false);
 for (let i = 0; i < 4; i++) spawnTraffic(false, true);
@@ -1366,6 +1412,7 @@ function update(dt) {
   $('clock').textContent = clockStr();
   document.body.classList.toggle('inveh', !!(P.veh || P.plane)); document.body.classList.toggle('inheli', !!(P.plane && P.plane.T.heli));
   updatePlanes(dt);
+  if (!save.cay && P.x > 470 && !P.plane && !P.para) { save.cay = 1; persist(); big('DESIGN CAY', 'Type Certificate · STC · STSO', '', 3200); help('Contacts here: <b style="color:#9b8cff">T</b> Type Certification · <b style="color:#ff9b42">S</b> STC Mod Hangar · <b style="color:#3fe0c5">P</b> STSO Parts Plant. Finish all six for the <b>Design Board</b> exam.', 10000); }
   updateMission(dt); updateContacts(dt);
   trafficT -= dt; if (trafficT <= 0) { trafficT = 3; const n = vehicles.filter(v => v.ai.role === 'traffic' && v.driver === 'npc').length; if (n < 14 && vehicles.length < 48) spawnTraffic(true, Math.random() < 0.25); }
   // engine note

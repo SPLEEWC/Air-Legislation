@@ -4,7 +4,10 @@ const TOPICS = {
   mx:   { name: 'Aircraft Maintenance', color: '#4fc3ff' },
   crs:  { name: 'Certificate of Release to Service', color: '#7dff8a' },
   cmr:  { name: 'Certificate of Maintenance Review', color: '#ffcf3f' },
-  tlog: { name: 'Technical Log', color: '#ff7ad9' }
+  tlog: { name: 'Technical Log', color: '#ff7ad9' },
+  tc:   { name: 'Type Certificate', color: '#9b8cff', island: true },
+  stc:  { name: 'Supplemental Type Certificate', color: '#ff9b42', island: true },
+  stso: { name: 'Singapore Technical Standard Order', color: '#3fe0c5', island: true }
 };
 
 /* Notebook facts – unlocked by mission dialogue and hidden logbook pages */
@@ -38,18 +41,40 @@ const FACTS = {
   tl4:  { t: 'tlog', s: 'Slide 71', x: 'A tech log page has a <b>Defect Description</b>, an <b>Action Taken</b> section (MEL item, deferred defect, parts on/off), and a <b>signature with licence/authorisation number</b> under the CRS statement.' },
   tl5:  { t: 'tlog', s: 'Slide 71', x: 'Entries are in <b>BLOCK LETTERS</b> and all times in <b>GMT (Z)</b>. The blue and pink copies are removed before the next flight.' },
   tl6:  { t: 'tlog', s: 'Slide 72 · SAR 4.6', x: 'Public transport and aerial work aircraft keep an <b>Aircraft</b> log book, <b>Engine</b> log book, <b>Variable Pitch Propeller</b> log book and <b>Modification</b> log book.' },
-  tl7:  { t: 'tlog', s: 'Slide 72', x: 'Relevant entries from the <b>technical log are transferred</b> to the respective log books.' }
+  tl7:  { t: 'tlog', s: 'Slide 72', x: 'Relevant entries from the <b>technical log are transferred</b> to the respective log books.' },
+  // ── Design Cay (SAR Part 21) ──
+  tc1:  { t: 'tc',   s: 'Slide 81', x: 'Aircraft design &amp; production goes through three stages: <b>Design → Production → Flight Test</b>.' },
+  tc2:  { t: 'tc',   s: 'Slide 82 · SAR-21 Subpart A/B', x: 'Each <b>new aircraft type</b> is issued a <b>Type Certificate (TC)</b> by the Civil Aviation Authority of the <b>State of Design</b>.' },
+  tc3:  { t: 'tc',   s: 'Slide 82', x: 'CAAS grants a <b>letter of acceptance</b> of a TC issued by the <b>FAA</b> where the US is the State of Design, or by the <b>relevant authority of a contracting state</b>.' },
+  tc4:  { t: 'tc',   s: 'Slide 88 · Subpart G', x: 'Holders of a <b>TC, STC, modification/repair approval or STSO</b> approval shall obtain <b>Design Organisation Approval (DOA)</b>.' },
+  stc1: { t: 'stc',  s: 'Slide 83', x: 'All design changes are classified as <b>Minor</b> or <b>Major</b>.' },
+  stc2: { t: 'stc',  s: 'Slide 83', x: '<b>Major</b> changes affect <b>weight &amp; balance</b>, <b>structural strength</b>, <b>flight performance &amp; characteristics</b>, <b>power plant operations</b> or other qualities affecting airworthiness.' },
+  stc3: { t: 'stc',  s: 'Slide 83', x: '<b>Minor</b> changes are developed by Design Organisations and approved by the <b>Authority</b> or by <b>DOA holders</b>.' },
+  stc4: { t: 'stc',  s: 'Slide 84 · Subpart C', x: 'A <b>Supplemental Type Certificate (STC)</b> is the design approval for a <b>major change to a type design</b> of a product.' },
+  stc5: { t: 'stc',  s: 'Slide 84', x: 'The STC is issued by the Civil Aviation Authority of the <b>State of Registry</b> of the aircraft the modification is performed on.' },
+  stc6: { t: 'stc',  s: 'Slide 85', x: 'Major changes are <b>developed by DOA holders</b> and can <b>only be approved by the Authority</b>, through the issue of an STC.' },
+  stc7: { t: 'stc',  s: 'Slide 85', x: 'The STC holder keeps <b>complete and current technical data</b> for each STC <b>for the life of any product</b> incorporating it.' },
+  stc8: { t: 'stc',  s: 'Slide 88', x: 'DOA privileges: develop design data, issue statements of compliance, approve minor changes, arrange production. <b>Only design signatories</b> certify design data and issue statements of compliance.' },
+  so1:  { t: 'stso', s: 'Slide 86 · Subpart E', x: '<b>STSO approval</b> is the <b>design approval for products installed on aircraft</b> (articles such as avionics units, seat belts, emergency beacons).' },
+  so2:  { t: 'stso', s: 'Slide 86', x: 'An STSO applicant shall <b>apply for or hold DOA</b>, or have an <b>arrangement for design configuration control</b>.' },
+  so3:  { t: 'stso', s: 'Slide 86', x: 'The STSO holder keeps the complete and current technical data file until <b>2 years after production stops</b>.' },
+  so4:  { t: 'stso', s: 'Slide 89 · Subpart J', x: 'A <b>Production Organisation Approval (POA)</b> holder may produce products and articles and issue an <b>Authorised Release Certificate CAAS(AW)95</b> for the articles produced.' },
+  so5:  { t: 'stso', s: 'Slide 89', x: 'A POA holder must <b>hold DOA</b> or have an <b>arrangement with a DOA holder</b>.' },
+  so6:  { t: 'stso', s: 'Slides 82-86', x: 'Tell them apart: <b>TC</b> → a whole new aircraft type · <b>STC</b> → a major change to an existing type design · <b>STSO</b> → an article that is installed on aircraft.' }
 };
 
 /* Hidden logbook pages (collectibles) – each reveals a fact */
-const PAGES = ['mx3', 'mx6', 'mx9', 'crs2', 'crs6', 'crs9', 'cmr3', 'cmr4', 'cmr5', 'tl4', 'tl5', 'tl6'];
+const PAGES = ['mx3', 'mx6', 'mx9', 'crs2', 'crs6', 'crs9', 'cmr3', 'cmr4', 'cmr5', 'tl4', 'tl5', 'tl6', 'tc3', 'stc2', 'stc7', 'so3'];
 
 const CONTACTS = {
   O: { name: 'Rina Okafor', role: 'Maintenance Planning', loc: 'ops',     color: '#4fc3ff', look: { shirt: 0x2b7bd6, hat: 0xffffff } },
   C: { name: 'Dev Raman',   role: 'Chief Certifying Engineer', loc: 'hangar', color: '#7dff8a', look: { shirt: 0x26a65b, hat: 0xffd21a } },
   Q: { name: 'Aisha Tan',   role: 'Quality Manager', loc: 'quality', color: '#ffcf3f', look: { shirt: 0xe0a106, hat: 0x222222 } },
   K: { name: 'Capt. Lim',   role: 'Line Captain', loc: 'crew',       color: '#ff7ad9', look: { shirt: 0xffffff, hat: 0x111a33 } },
-  I: { name: 'Inspector Farah', role: 'CAAS Airworthiness', loc: 'caas', color: '#ff5252', look: { shirt: 0x1a237e, hat: 0x1a237e } }
+  I: { name: 'Inspector Farah', role: 'CAAS Airworthiness', loc: 'caas', color: '#ff5252', look: { shirt: 0x1a237e, hat: 0x1a237e } },
+  T: { name: 'Dr. Lena Ortiz', role: 'Type Certification · Design Cay', loc: 'tcc', color: '#9b8cff', island: true, look: { shirt: 0x5b4bc4, hat: 0xffffff } },
+  S: { name: 'Marco Lim', role: 'DOA Design Engineer · Design Cay', loc: 'modh', color: '#ff9b42', island: true, look: { shirt: 0xe0701a, hat: 0x222222 } },
+  P: { name: 'Priya Nair', role: 'STSO Parts Plant · Design Cay', loc: 'plant', color: '#3fe0c5', island: true, look: { shirt: 0x139a86, hat: 0xffd21a } }
 };
 
 const Q = (q, a, wrong, why, s) => ({ t: 'quiz', q, a, wrong, why, s });
@@ -218,7 +243,125 @@ const MISSIONS = [
   { t: 'talk', lines: [
     ['I', "Got him. Pencil-whipping ends today."],
     ['I', "Come to the <b>CAAS Office</b> when you're ready. The <b>Licence Board</b> wants a word."]] }
+] },
+/* ───── Design Cay · T · Type Certificate ───── */
+{ id: 'd1', c: 'T', island: true, topic: 'tc', name: 'State of Design', cash: 800, steps: [
+  { t: 'talk', lines: [
+    ['T', "Welcome to <b>Design Cay</b>. I'm Dr. Lena Ortiz – I deal with <b>Type Certificates</b>."],
+    ['T', "Every new aircraft goes through three stages: <b>Design</b>, then <b>Production</b>, then <b>Flight Test</b>.", 'tc1'],
+    ['T', "Show me you know the order: visit each stage on the island, in sequence."]] },
+  { t: 'choose', time: 70, text: 'A brand-new aircraft type. <b>Stage 1</b> – drive to it.', opts: [{ loc: 'doa', label: 'DESIGN\nDesign Office', ok: true, why: '' }, { loc: 'prod', label: 'PRODUCTION\nProduction Plant', ok: false, why: 'You cannot produce an aircraft that has not been designed yet.' }, { loc: 'ftest', label: 'FLIGHT TEST\nTest Strip', ok: false, why: 'Flight test comes last – there is nothing to fly yet.' }], why: 'Design comes first.' },
+  { t: 'choose', time: 70, text: '<b>Stage 2</b> – drive to it.', opts: [{ loc: 'doa', label: 'DESIGN\nDesign Office', ok: false, why: 'Design is done – what comes next?' }, { loc: 'prod', label: 'PRODUCTION\nProduction Plant', ok: true, why: '' }, { loc: 'ftest', label: 'FLIGHT TEST\nTest Strip', ok: false, why: 'The aircraft must be built before it can be flight tested.' }], why: 'Production comes second.' },
+  { t: 'choose', time: 80, text: '<b>Stage 3</b> – drive to it.', opts: [{ loc: 'doa', label: 'DESIGN\nDesign Office', ok: false, why: 'Design is long finished.' }, { loc: 'prod', label: 'PRODUCTION\nProduction Plant', ok: false, why: 'Production is done – the aircraft now has to prove itself in the air.' }, { loc: 'ftest', label: 'FLIGHT TEST\nTest Strip', ok: true, why: '' }], why: 'Flight test completes the sequence.' },
+  { t: 'talk', lines: [
+    ['T', "When a new type has been through all that, it receives a <b>Type Certificate – TC</b>."],
+    ['T', "The TC is issued by the Civil Aviation Authority of the <b>State of Design</b> – the country where the type was designed.", 'tc2'],
+    ['T', "And whoever holds a TC – or an STC, a mod/repair approval or an STSO – must hold <b>Design Organisation Approval, DOA</b>.", 'tc4']] },
+  Q('Who issues the Type Certificate for a new aircraft type?', 'The Civil Aviation Authority of the State of Design', ['CAAS, for every aircraft flown in Singapore', 'The airline that buys the first aircraft'], 'Slide 82: each new aircraft type is issued a TC by the CAA of the State of Design.', 'Slide 82')
+] },
+{ id: 'd2', c: 'T', island: true, topic: 'tc', name: 'Letter of Acceptance', cash: 1000, steps: [
+  { t: 'talk', lines: [
+    ['T', "Most aircraft flying in Singapore were designed somewhere else. CAAS doesn't issue them a new TC…"],
+    ['T', "…it grants a <b>letter of acceptance</b> of the existing TC – one issued by the <b>FAA</b> where the US is the State of Design, or by the <b>relevant authority of a contracting state</b>.", 'tc3']] },
+  { t: 'choose', time: 70, text: 'A jet type designed in the <b>United States</b> joins a Singapore airline. What does CAAS issue for its type design?', opts: [
+    { loc: 'n1', label: 'LETTER OF ACCEPTANCE\nof the FAA TC', ok: true },
+    { loc: 'n2', label: 'A NEW\nSingapore TC', ok: false, why: 'CAAS accepts the State of Design\'s TC with a letter of acceptance – it does not re-certificate the type.' },
+    { loc: 'n3', label: 'AN STC', ok: false, why: 'An STC approves a major change to a type design – not a whole new type.' }],
+    why: 'CAAS grants a letter of acceptance of the FAA TC (the US is the State of Design).' },
+  { t: 'talk', lines: [['T', "Trouble – a dealer is trying to sneak a prototype with <b>no Type Certificate at all</b> off the island. Stop him before he reaches the bridge!"]] },
+  { t: 'chase', veh: 'van', route: ['iNE', 'iE', 'iSE', 'iSW', 'iW', 'bE', 'bW'], hits: 3, text: 'Stop the uncertified dealer before he crosses the bridge! <b>Ram him 3 times.</b>', who: 'Uncertified dealer' },
+  Q('A TC was issued by the aviation authority of another ICAO contracting state. What can CAAS do?', 'Grant a letter of acceptance of that TC', ['Nothing – only FAA TCs can be accepted', 'Insist the aircraft is redesigned in Singapore'], 'Slide 82: CAAS grants a letter of acceptance of a TC issued by the relevant authority of a contracting state.', 'Slide 82')
+] },
+/* ───── Design Cay · S · Supplemental Type Certificate ───── */
+{ id: 'd3', c: 'S', island: true, topic: 'stc', name: 'Major or Minor', cash: 800, steps: [
+  { t: 'talk', lines: [
+    ['S', "Marco Lim, DOA design engineer. Airlines are always changing their aircraft – and every <b>design change</b> is classified <b>Minor</b> or <b>Major</b>.", 'stc1'],
+    ['S', "It's <b>Major</b> if it affects <b>weight &amp; balance</b>, <b>structural strength</b>, <b>flight performance &amp; characteristics</b>, <b>power plant operations</b> or anything else affecting airworthiness.", 'stc2'],
+    ['S', "<b>Minor</b> changes are developed by Design Organisations and approved by the <b>Authority</b> or a <b>DOA holder</b>.", 'stc3'],
+    ['S', "My in-tray blew across the island. Collect only the <b>MAJOR</b> change requests – the markers won't tell you which is which."]] },
+  { t: 'collect', blind: true, time: 100, text: 'Collect the <b>3 MAJOR</b> design changes. Leave the minor ones.', items: [
+    { loc: 'n1', label: 'Bigger fuel tank\n(changes weight & balance)', ok: true },
+    { loc: 's2', label: 'Wing spar reinforcement\n(structural strength)', ok: true },
+    { loc: 'n3', label: 'Higher engine thrust rating\n(power plant operations)', ok: true },
+    { loc: 's1', label: 'New seat-cover fabric', ok: false, why: 'No effect on weight & balance, strength, performance or the power plant – a minor change.' },
+    { loc: 'n2', label: 'Galley curtain colour', ok: false, why: 'Cosmetic, no airworthiness effect – a minor change.' },
+    { loc: 's3', label: 'Re-worded cabin placard', ok: false, why: 'No airworthiness effect – a minor change.' }] },
+  { t: 'sort', title: 'Classify the change', prompt: 'Major or minor?', bins: ['Major', 'Minor'],
+    items: [['Moving a heavy galley 6 m aft (weight & balance)', 0], ['Changing flight-control surface travel (flight characteristics)', 0], ['New carpet of the same weight and fire rating', 1], ['Adding a reading-light switch label', 1]],
+    why: 'Major = affects weight & balance, structural strength, flight performance & characteristics, power plant operations or airworthiness.' },
+  Q('Who can approve a MINOR design change?', 'The Authority, or a DOA holder', ['Only the State of Design', 'Any licensed mechanic'], 'Slide 83: minor changes are approved by the authority or by holders of Design Organisation Approval.', 'Slide 83')
+] },
+{ id: 'd4', c: 'S', island: true, topic: 'stc', name: 'The Supplemental', cash: 1000, steps: [
+  { t: 'talk', lines: [
+    ['S', "A <b>major</b> change to a type design needs a <b>Supplemental Type Certificate – STC</b>.", 'stc4'],
+    ['S', "The STC is issued by the CAA of the <b>State of Registry</b> of the aircraft being modified.", 'stc5'],
+    ['S', "Major changes are <b>developed by DOA holders</b> – but <b>only the Authority</b> can approve them, by issuing the STC.", 'stc6']] },
+  { t: 'choose', time: 70, text: '<b>9V-VBA</b> (a Singapore-registered A320) is getting a satellite-comms antenna – a major change. <b>Who issues the STC?</b>', opts: [
+    { loc: 's1', label: 'CAAS\nState of Registry', ok: true },
+    { loc: 's2', label: 'STATE OF DESIGN\nauthority', ok: false, why: 'The STC is issued by the State of Registry of the aircraft being modified – Singapore, for a 9V aircraft.' },
+    { loc: 's3', label: 'THE DOA HOLDER\nitself', ok: false, why: 'DOA holders develop major changes, but only the Authority can approve them through an STC.' }],
+    why: '9V = Singapore registry, so CAAS issues the STC.' },
+  { t: 'talk', lines: [['S', "The STC holder keeps <b>complete and current technical data</b> for each STC – for the <b>life of any product</b> that carries it. Take this data pack to the <b>Technical Data Vault</b>.", 'stc7']] },
+  { t: 'goto', loc: 'vault', time: 80, text: 'Deliver the STC data pack to the <b>Technical Data Vault</b>.' },
+  { t: 'talk', lines: [
+    ['S', "One more thing: DOA holders can develop design data, issue statements of compliance and approve minor changes – but <b>only design signatories</b> can certify design data.", 'stc8'],
+    ['S', "Alert! A shop is fitting an antenna with <b>no STC</b> and heading for the flight test strip. Stop them!"]] },
+  { t: 'chase', veh: 'van', route: ['iSW', 'iSE', 'iNE', 'iNW', 'n1', 'ftest'], hits: 3, text: 'Stop the unapproved modification before it reaches the test strip! <b>Ram it 3 times.</b>', who: 'No-STC mod van' },
+  Q('How long must an STC holder keep the technical data for that STC?', 'For the life of any product incorporating the STC', ['2 years', 'Until the next C of A renewal'], 'Slide 85: complete and current technical data for each STC for the life of any product incorporating it.', 'Slide 85')
+] },
+/* ───── Design Cay · P · Singapore Technical Standard Order ───── */
+{ id: 'd5', c: 'P', island: true, topic: 'stso', name: 'Parts with Papers', cash: 800, steps: [
+  { t: 'talk', lines: [
+    ['P', "Priya Nair, STSO Parts Plant. <b>STSO</b> stands for <b>Singapore Technical Standard Order</b>."],
+    ['P', "STSO approval is the <b>design approval for products installed on aircraft</b> – avionics boxes, seat belts, emergency beacons, lights.", 'so1'],
+    ['P', "An applicant must <b>apply for or hold DOA</b> – or have an <b>arrangement for design configuration control</b>.", 'so2'],
+    ['P', "Our delivery truck spilled its paperwork. Collect only the items that would get an <b>STSO</b>."]] },
+  { t: 'collect', blind: true, time: 100, text: 'Collect the <b>3 articles</b> that would get STSO approval.', items: [
+    { loc: 's1', label: 'Emergency locator\ntransmitter', ok: true },
+    { loc: 'n2', label: 'Seat belt\nassembly', ok: true },
+    { loc: 's3', label: 'Navigation light\nunit', ok: true },
+    { loc: 'n1', label: 'A whole new\naircraft type', ok: false, why: 'A new aircraft type gets a Type Certificate, not an STSO.' },
+    { loc: 's2', label: 'Cabin layout\nmodification', ok: false, why: 'A major change to a type design needs an STC.' },
+    { loc: 'n3', label: 'Airline\ntimetable', ok: false, why: 'Not something installed on an aircraft.' }] },
+  { t: 'check', title: 'STSO application', prompt: 'What must an STSO applicant have? Select ALL that apply.',
+    items: [['DOA status – or an application for it', true], ['…or an arrangement for design configuration control', true], ['An Air Operator Certificate', false], ['A Certificate of Airworthiness for the article', false]],
+    why: 'Slide 86: apply for/hold DOA, or have an arrangement for design configuration control.' },
+  Q('An STSO approval is…', 'A design approval for an article installed on aircraft', ['An approval to operate an airline', 'A certificate that a whole aircraft is airworthy'], 'Slide 86: STSO approval is the design approval for products that are installed on aircraft.', 'Slide 86')
+] },
+{ id: 'd6', c: 'P', island: true, topic: 'stso', name: 'Production Run', cash: 1000, steps: [
+  { t: 'talk', lines: [
+    ['P', "Designing an article is one thing; making it is another. A <b>Production Organisation Approval – POA</b> holder may produce it and issue an <b>Authorised Release Certificate, CAAS(AW)95</b>.", 'so4'],
+    ['P', "A POA holder must <b>hold DOA</b>, or have an <b>arrangement with a DOA holder</b>. Head to the Production Plant.", 'so5']] },
+  { t: 'goto', loc: 'prod', time: 80, text: 'Drive to the <b>Production Plant</b>.' },
+  Q('Which certificate does a POA holder issue for the articles it produces?', 'Authorised Release Certificate CAAS(AW)95', ['Supplemental Type Certificate', 'Certificate of Registration'], 'Slide 89: POA holders issue an Authorised Release Certificate CAAS(AW)95 for articles produced.', 'Slide 89'),
+  { t: 'talk', lines: [['P', "This beacon line is being retired. When production stops, the STSO holder keeps the complete technical data file for <b>2 more years</b>. Take the file to the Vault.", 'so3']] },
+  { t: 'goto', loc: 'vault', time: 80, text: 'Archive the data file at the <b>Technical Data Vault</b>.' },
+  { t: 'talk', lines: [['P', "Let's make sure you can tell the three approvals apart.", 'so6']] },
+  { t: 'sort', title: 'TC, STC or STSO?', prompt: 'Which design approval does each one need?', bins: ['TC', 'STC', 'STSO'],
+    items: [['A brand-new aircraft type', 0], ['A major change to an existing type design', 1], ['An avionics unit fitted to many aircraft types', 2], ['Relocating the galley on a 9V A320 (weight & balance)', 1], ['A new seat belt assembly design', 2]],
+    why: 'TC → new type · STC → major change to a type design · STSO → article installed on aircraft.' },
+  Q('Production of an STSO article stops on 1 Jan 2026. Until when must the technical data file be kept?', '1 Jan 2028 – 2 years after production stops', ['1 Jan 2027', 'For the life of every aircraft'], 'Slide 86: until 2 years from the date of cessation of production.', 'Slide 86')
 ] }
+];
+
+/* Design Cay: Design Board exam */
+const DEXAM = [
+  Q('The three stages of aircraft design & production are…', 'Design → Production → Flight Test', ['Flight Test → Design → Production', 'Production → Design → Flight Test'], 'Slide 81.', 'Slide 81'),
+  Q('Who issues the TC for a new aircraft type?', 'The CAA of the State of Design', ['CAAS for every type', 'The aircraft operator'], 'Slide 82.', 'Slide 82'),
+  Q('For a type designed in the US, CAAS…', 'Grants a letter of acceptance of the FAA TC', ['Issues its own new TC', 'Issues an STC'], 'Slide 82.', 'Slide 82'),
+  Q('Design changes are classified as…', 'Minor or Major', ['Small, Medium or Large', 'Internal or External'], 'Slide 83.', 'Slide 83'),
+  Q('Which change is MAJOR?', 'One that affects structural strength', ['New seat-cover fabric', 'A re-worded placard'], 'Slide 83.', 'Slide 83'),
+  Q('Who can approve a minor design change?', 'The Authority or a DOA holder', ['Only the State of Design', 'The pilot-in-command'], 'Slide 83.', 'Slide 83'),
+  Q('An STC is the design approval for…', 'A major change to a type design', ['A whole new aircraft type', 'An article such as a seat belt'], 'Slide 84.', 'Slide 84'),
+  Q('Who issues the STC?', 'The CAA of the State of Registry of the modified aircraft', ['The State of Design', 'The DOA holder'], 'Slide 84.', 'Slide 84'),
+  Q('Major changes are developed by…', 'DOA holders – and approved only by the Authority via an STC', ['Any approved maintenance organisation, which approves them itself', 'The aircraft owner'], 'Slide 85.', 'Slide 85'),
+  Q('How long does an STC holder keep the technical data?', 'For the life of any product incorporating the STC', ['2 years', '5 years'], 'Slide 85.', 'Slide 85'),
+  Q('STSO approval is the design approval for…', 'Products installed on aircraft', ['A complete aircraft type', 'An airline\'s operations'], 'Slide 86.', 'Slide 86'),
+  Q('An STSO applicant must…', 'Hold or apply for DOA, or have a design configuration control arrangement', ['Hold an AOC', 'Be a CAAS employee'], 'Slide 86.', 'Slide 86'),
+  Q('STSO technical data is kept until…', '2 years after production stops', ['The article is first sold', 'Forever'], 'Slide 86.', 'Slide 86'),
+  Q('Who must obtain Design Organisation Approval?', 'Holders of a TC, STC, mod/repair approval or STSO', ['Every airline pilot', 'Only aircraft owners'], 'Slide 88.', 'Slide 88'),
+  Q('Within a DOA company, who certifies design data?', 'Only design signatories', ['Any employee', 'The accountable manager\'s secretary'], 'Slide 88.', 'Slide 88'),
+  Q('A POA holder issues which certificate for articles it produces?', 'Authorised Release Certificate CAAS(AW)95', ['Type Certificate', 'Certificate of Maintenance Review'], 'Slide 89.', 'Slide 89')
 ];
 
 /* Final Licence Board exam + Records Desk question bank */
