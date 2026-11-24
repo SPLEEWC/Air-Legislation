@@ -6,7 +6,7 @@ ME2804 Air Legislation learning games. `index.html` is the landing page that hos
 |---|---|---|
 | **Air Legislation Academy** – 3D adventure | `game/` | 1–42 (Chicago Convention, ICAO, ANA, ANO, SAR, UAS) |
 | **9V Clearance** – tactical shooter | `ops/` | 43–63, 156–161 (Singapore Air Operator, C of A & Export C of A, Noise Certificate, Permit to Fly) |
-| **Pencil Whip** – open-world driving | `whip/` | 64–73, 99–104, 110–127 (Aircraft Maintenance, CRS, CMR, Technical Log); Design Cay island: 81–89 (Type Certificate, STC, STSO) |
+| **Pencil Whip** – open-world driving | `whip/` | 64–73, 99–104, 110–127 (Aircraft Maintenance, CRS, CMR, Technical Log); Design Cay island: 81–89 (Type Certificate, STC, STSO); Compliance Key island: 87–96, 115, 132–134 (Repair Design Approval, DOA, POA, Service Bulletins & ADs) |
 
 Run locally:
 

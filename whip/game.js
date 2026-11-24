@@ -16,7 +16,8 @@ let save = { name: '', done: {}, cash: 0, facts: {}, pages: {}, exam: 0, intro: 
 try { const s = JSON.parse(localStorage.getItem(SKEY) || '{}'); Object.assign(save, s); save.stats = Object.assign({ busted: 0, jacked: 0, peds: 0, wrong: 0, right: 0 }, s.stats || {}); } catch (e) {}
 const persist = () => { try { localStorage.setItem(SKEY, JSON.stringify(save)); } catch (e) {} };
 const mainDone = () => MISSIONS.filter(m => !m.final && !m.island).filter(m => save.done[m.id]).length;
-const cayDone = () => MISSIONS.filter(m => m.island).every(m => save.done[m.id]);
+const cayDone = () => MISSIONS.filter(m => m.island === true).every(m => save.done[m.id]);
+const keyDone = () => MISSIONS.filter(m => m.island === 'key').every(m => save.done[m.id]);
 const RANKS = [[0, 'Apprentice'], [2, 'Mechanic'], [4, 'B1 Engineer'], [6, 'Certifying Staff'], [8, 'Chief Engineer']];
 const rank = () => save.exam >= 8 ? 'Licence Board Approved' : RANKS.filter(r => mainDone() >= r[0]).pop()[1];
 
@@ -175,14 +176,17 @@ const LOC = {
   cab0: [136, -42], cab1: [152, -42], cab2: [168, -42], cab3: [184, -42], runway: [215, -232], dock: [-225, 196],
   tcc: [575, -12], modh: [700, -12], plant: [545, 12], doa: [630, -12], prod: [630, 12], vault: [700, 12], ftest: [630, -138],
   n1: [545, -120], n2: [630, -120], n3: [715, -120], s1: [545, 120], s2: [630, 120], s3: [715, 120],
-  iNW: [500, -120], iNE: [760, -120], iSE: [760, 120], iSW: [500, 120], iW: [500, 0], iE: [760, 0], bE: [468, 0], bW: [250, 0]
+  iNW: [500, -120], iNE: [760, -120], iSE: [760, 120], iSW: [500, 120], iW: [500, 0], iE: [760, 0], bE: [468, 0], bW: [250, 0],
+  rdo: [560, 378], doah: [630, 378], sbad: [705, 378], poaf: [560, 402], release: [630, 402], b737: [705, 472],
+  c1: [545, 290], c2: [630, 290], c3: [715, 290], c4: [545, 490], c5: [630, 490], c6: [715, 490], doa1m: [590, 390], doa2m: [672, 390], doa3m: [740, 390],
+  kNW: [500, 290], kNE: [760, 290], kSE: [760, 490], kSW: [500, 490], kW: [500, 390], kE: [760, 390], b2S: [630, 272], b2N: [630, 150]
 };
 for (let i = 0; i < NX; i++) for (let j = 0; j < NZ; j++) LOC[`n_${i}_${j}`] = [XL[i], ZL[j]];
 const L = k => ({ x: LOC[k][0], z: LOC[k][1] });
 
 /* ───────── colliders ───────── */
 const COL = [];
-const LAND = [{ x0: -238, x1: 238, z0: -262, z1: 205 }, { x0: -229, x1: -221, z0: 200, z1: 222 }, { x0: 230, x1: 480, z0: -8, z1: 8 }, { x0: 470, x1: 790, z0: -150, z1: 150 }];
+const LAND = [{ x0: -238, x1: 238, z0: -262, z1: 205 }, { x0: -229, x1: -221, z0: 200, z1: 222 }, { x0: 230, x1: 480, z0: -8, z1: 8 }, { x0: 470, x1: 790, z0: -150, z1: 150 }, { x0: 622, x1: 638, z0: 140, z1: 268 }, { x0: 470, x1: 790, z0: 260, z1: 520 }];
 const onLand = (x, z) => LAND.some(R => x >= R.x0 && x <= R.x1 && z >= R.z0 && z <= R.z1);
 function addCol(cx, cz, w, d, h = 10) { const c = { x0: cx - w / 2, x1: cx + w / 2, z0: cz - d / 2, z1: cz + d / 2, h }; COL.push(c); return c; }
 function pushOut(x, z, r) {
@@ -335,7 +339,7 @@ function airliner(x, z, reg, o) {
   g.position.set(x, 0, z); scene.add(g);
   const lb = textSprite(reg + '\n' + o.type, { size: 44, scale: 0.06, edge: '#ffc83d' }); lb.position.set(x, y0 + R * 4 + 3, z); scene.add(lb);
   const cs = [addCol(x, z, R * 2.1, Lf + R * 2.4, y0 + R), addCol(x, z - Lf * 0.04, span, Lf * 0.2, 4), addCol(x, z - Lf / 2, span * 0.36, Lf * 0.09, 4)]; cs.forEach(c => { c.plane = true; });
-  PLANES.push({ reg, type: o.type, g, lb, lbY: y0 + R * 4 + 3, cols: cs, home: { x, z }, len: Lf + R * 2.4, span, wingZ: -Lf * 0.04, fusR: R, spec: o.type === 'A320' ? 'a320' : 'heavy' });
+  PLANES.push({ reg, type: o.type, g, lb, lbY: y0 + R * 4 + 3, cols: cs, home: { x, z }, len: Lf + R * 2.4, span, wingZ: -Lf * 0.04, fusR: R, spec: (o.type === 'A320' || o.type === 'B737-300') ? 'a320' : 'heavy' });
   aircraft[reg] = g; return g;
 }
 airliner(-80, -126, '9V-VBA', { len: 30, r: 1.9, span: 30, c1: 0x1f5fbf, c2: 0x1f5fbf, type: 'A320' });
@@ -428,7 +432,7 @@ for (let z = -60; z <= 150; z += 24) { tree(-224 + rnd(-4, 4), z, true); if (Mat
   for (let x = 250; x <= 460; x += 30) { box(2.4, 6, 10, 0x7d8188, x, -3.4, 0); }
   const road = (x0, z0, x1, z1) => { const horiz = z0 === z1, len = horiz ? x1 - x0 : z1 - z0, t = rTex[0].clone(); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, len / 8);
     const m = plane(RH * 2, len, new THREE.MeshLambertMaterial({ map: t }), (x0 + x1) / 2, 0.05, (z0 + z1) / 2); if (horiz) m.rotation.z = Math.PI / 2; };
-  road(207, 0, 500, 0); road(507, 0, 753, 0); road(507, -120, 753, -120); road(507, 120, 753, 120); road(500, -127, 500, 127); road(760, -127, 760, 127);
+  road(207, 0, 500, 0); road(630, 127, 630, 150); road(507, 0, 753, 0); road(507, -120, 753, -120); road(507, 120, 753, 120); road(500, -127, 500, 127); road(760, -127, 760, 127);
   [[500, -120], [760, -120], [500, 120], [760, 120], [500, 0], [760, 0]].forEach(([x, z]) => plane(RH * 2, RH * 2, 0x363a41, x, 0.055, z));
   for (let x = 262; x <= 452; x += 38) [-1, 1].forEach(sg => lamp(x, sg * 8.8, 0, -sg));
   const ds = textSprite('DESIGN CAY ▸\nType Certificate · STC · STSO', { size: 40, scale: 0.06, edge: '#9b8cff' }); ds.position.set(250, 9, 0); scene.add(ds);
@@ -445,9 +449,33 @@ for (let z = -60; z <= 150; z += 24) { tree(-224 + rnd(-4, 4), z, true); if (Mat
   bld(705, 58, 34, 26, 9, 0x8f9db0, 0x3a4352); sign('TECHNICAL DATA VAULT', 705, 14, 44, '#ffc83d');
   billboard(560, 20, -58, Math.PI, 'DESIGN → PRODUCTION', '→ FLIGHT TEST. In that order.', '#5b4bc4', '#1f1a4d');
   // palms and trees
-  for (let x = 480; x <= 780; x += 24) { if (Math.abs(x - 505) > 8 && Math.abs(x - 775) > 8) { tree(x + rnd(-3, 3), 140 + rnd(-2, 3), true); } }
+  for (let x = 480; x <= 780; x += 24) { if (Math.abs(x - 505) > 8 && Math.abs(x - 775) > 8 && Math.abs(x - 630) > 14) { tree(x + rnd(-3, 3), 140 + rnd(-2, 3), true); } }
   for (let z = -100; z <= 100; z += 25) { if (Math.abs(z) > 14) { tree(482 + rnd(-2, 2), z, true); tree(778 + rnd(-2, 2), z + 8, true); } }
   [[600, -30], [665, -30], [600, 30], [665, 30], [740, -30], [520, 30]].forEach(([x, z]) => tree(x, z));
+}
+/* ───────── Compliance Key: third island (repairs, DOA, POA, SB/AD) ───────── */
+{
+  plane(332, 272, noiseTex('#e6d6a2', 3000, 0.1, [30, 25]), 630, 0.005, 390);
+  plane(300, 240, noiseTex('#62a65a', 4000, 0.12, [40, 32]), 630, 0.012, 390);
+  box(16, 0.6, 122, 0x8d9096, 630, -0.28, 206).userData.flat = true;
+  [-1, 1].forEach(sg => box(0.35, 0.9, 122, 0xc9ccd1, 630 + sg * 7.8, 0.45, 206));
+  for (let z = 165; z <= 250; z += 28) box(10, 6, 2.4, 0x7d8188, 630, -3.4, z);
+  const road2 = (x0, z0, x1, z1) => { const horiz = z0 === z1, len = horiz ? x1 - x0 : z1 - z0, t = rTex[0].clone(); t.needsUpdate = true; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(1, len / 8);
+    const m = plane(RH * 2, len, new THREE.MeshLambertMaterial({ map: t }), (x0 + x1) / 2, 0.05, (z0 + z1) / 2); if (horiz) m.rotation.z = Math.PI / 2; };
+  road2(630, 150, 630, 283); road2(507, 290, 753, 290); road2(507, 490, 753, 490); road2(507, 390, 753, 390); road2(500, 283, 500, 497); road2(760, 283, 760, 497);
+  [[500, 290], [760, 290], [500, 490], [760, 490], [500, 390], [760, 390], [630, 290]].forEach(([x, z]) => plane(RH * 2, RH * 2, 0x363a41, x, 0.055, z));
+  for (let z = 168; z <= 250; z += 38) [-1, 1].forEach(sg => lamp(630 + sg * 8.8, z, -sg, 0));
+  const ks = textSprite('COMPLIANCE KEY ▼\nRepairs · DOA · POA · SB / AD', { size: 40, scale: 0.06, edge: '#ffb347' }); ks.position.set(630, 9, 156); scene.add(ks);
+  bld(560, 340, 44, 30, 12, 0xf0a0b4, 0x5a3440); sign('REPAIR DESIGN OFFICE', 560, 17, 356, '#ff6b8b');
+  bld(630, 340, 36, 28, 16, 0xa9c4f0, 0x2f3f66); sign('DOA DESIGN HOUSE', 630, 21, 355, '#7fb2ff');
+  bld(705, 340, 40, 28, 12, 0xf5c98a, 0x6b5030); sign('SB / AD BULLETIN CENTRE', 705, 17, 355, '#ffb347');
+  bld(560, 440, 48, 32, 11, 0xd4e39a, 0x4f5a30); sign('POA FACTORY', 560, 16, 423, '#c6e85a'); cyl(1.1, 1.4, 9, 0x8a8f99, 544, 15.5, 450); cyl(1.1, 1.4, 9, 0x8a8f99, 552, 15.5, 450);
+  bld(630, 440, 30, 24, 8, 0xd9dde4); sign('QUALITY RELEASE · CAAS(AW)95', 630, 13, 427, '#c6e85a');
+  airliner(705, 440, '9V-VBF', { len: 30, r: 1.9, span: 30, c1: 0x7a3db8, c2: 0x7a3db8, type: 'B737-300' });
+  billboard(705, 12, 340, 0, 'SB = OPTIONAL', 'AD = MANDATORY. No compliance, no flight.', '#ff8c1a', '#7a2c00');
+  for (let x = 480; x <= 780; x += 24) { if (Math.abs(x - 482) > 8 && Math.abs(x - 778) > 8) tree(x + rnd(-3, 3), 508 + rnd(-2, 2), true); if (Math.abs(x - 630) > 16 && Math.abs(x - 778) > 8) tree(x + rnd(-3, 3), 270 + rnd(-1, 2), true); }
+  for (let z = 305; z <= 480; z += 25) { if (Math.abs(z - 330) > 10 && Math.abs(z - 390) > 14) tree(482 + rnd(-2, 2), z, true); if (Math.abs(z - 390) > 14) tree(778 + rnd(-2, 2), z + 8, true); }
+  [[600, 365], [665, 365], [600, 415], [740, 415], [520, 415]].forEach(([x, z]) => tree(x, z));
 }
 scene.traverse(o => { if (o.isMesh && !o.userData.flat && o !== skyDome && !(o.material && o.material.transparent) && !(o.material && o.material.isMeshBasicMaterial)) { o.castShadow = true; o.receiveShadow = true; } });
 
@@ -1016,9 +1044,9 @@ function contactMission(k) {
   if (!next) return null; if (k !== 'O' && !CONTACTS[k].island && !save.done.m1) return null; if (next.final && mainDone() < 8) return null; return next;
 }
 const examOpen = () => !!save.done.m9;
-function contactActive(k) { return !!contactMission(k) || (k === 'I' && examOpen()) || (k === 'T' && cayDone()); }
+function contactActive(k) { return !!contactMission(k) || (k === 'I' && examOpen()) || (k === 'T' && cayDone()) || (k === 'A' && keyDone()); }
 // hidden logbook pages
-const PAGE_POS = [[-232, -252], [232, -250], [-160, -130], [186, -146], [40, -150], [-196, -72], [196, -76], [-80, 64], [190, 60], [-232, 100], [-225, 218], [200, 196], [775, -142], [775, 128], [505, 132], [480, -90]];
+const PAGE_POS = [[-232, -252], [232, -250], [-160, -130], [186, -146], [40, -150], [-196, -72], [196, -76], [-80, 64], [190, 60], [-232, 100], [-225, 218], [200, 196], [775, -142], [775, 128], [505, 132], [480, -90], [778, 272], [778, 510], [482, 508], [482, 330]];
 const pageRT = PAGE_POS.map(([x, z], i) => {
   if (save.pages[i]) return null;
   const g = new THREE.Group(), pg = box(1.2, 1.6, 0.06, new THREE.MeshBasicMaterial({ color: 0xfff6d8 }), 0, 1.6, 0, g);
@@ -1113,8 +1141,9 @@ function passMission() {
   setTimeout(() => {
     if (m.id === 'm1') help('New contacts on your radar: <b style="color:#7dff8a">C</b> Chief Engineer, <b style="color:#ffcf3f">Q</b> Quality, <b style="color:#ff7ad9">K</b> Captain.', 8000);
     else if (m.final) help('<b style="color:#ff5252">I</b> at the CAAS Office: the <b>Licence Board</b> exam is open.', 8000);
-    else if (m.island && cayDone()) help('Design Cay complete! <b style="color:#9b8cff">T</b> – Dr. Ortiz – has the <b>Design Board</b> exam.', 8000);
-    else if (m.island) { const nx = ['T', 'S', 'P'].find(k => contactMission(k)); if (nx) help(`Next on Design Cay: <b style="color:${CONTACTS[nx].color}">${nx}</b> – ${CONTACTS[nx].name}.`, 6000); }
+    else if (m.island) { const isl = m.island, nm = isl === 'key' ? 'Compliance Key' : 'Design Cay';
+      if (isl === 'key' ? keyDone() : cayDone()) help(isl === 'key' ? 'Compliance Key complete! <b style="color:#ffb347">A</b> – Inspector Ravi – has the <b>Compliance Board</b> exam.' : 'Design Cay complete! <b style="color:#9b8cff">T</b> – Dr. Ortiz – has the <b>Design Board</b> exam.', 8000);
+      else { const nx = Object.keys(CONTACTS).find(k => CONTACTS[k].island === isl && contactMission(k)); if (nx) help(`Next on ${nm}: <b style="color:${CONTACTS[nx].color}">${nx}</b> – ${CONTACTS[nx].name}.`, 6000); } }
     else if (mainDone() === 8) help('All contacts done! <b style="color:#ff5252">I</b> – Inspector Farah at the CAAS Office – has the final job.', 8000);
     else { const nx = Object.keys(CONTACTS).find(k => !CONTACTS[k].island && contactMission(k)); if (nx) help(`Next: <b style="color:${CONTACTS[nx].color}">${nx}</b> – ${CONTACTS[nx].name} (${CONTACTS[nx].role}).`, 6000); }
   }, 3800);
@@ -1127,7 +1156,7 @@ function updateContacts(dt) {
     if (!act || MS || mode !== 'play' || !enter || air) continue;
     if (heat > 0) { toast('Lose your ★ heat first – stay out of sight, or answer at the pink <b style="color:#ff6fc8">R</b> Records Desk.'); continue; }
     if (P.veh) P.veh.vx = P.veh.vz = 0;
-    const m = contactMission(k); if (m) startMission(m); else if (k === 'I') openExam(); else if (k === 'T') openExam('design');
+    const m = contactMission(k); if (m) startMission(m); else if (k === 'I') openExam(); else if (k === 'T') openExam('design'); else if (k === 'A') openExam('key');
   }
   // records desk
   const rin = Math.hypot(P.x - recMark.x, P.z - recMark.z) < 3.4, renter = rin && !recMark.was; recMark.was = rin;
@@ -1227,12 +1256,13 @@ function renderMenu() {
   if (menuTab === 'missions') body = Object.entries(CONTACTS).map(([k, c]) => `<div class="ey" style="--tc:${c.color};margin-top:12px">${k} · ${c.name} – ${c.role}</div>` + MISSIONS.filter(m => m.c === k).map(m => { const st = save.done[m.id] ? '✅ Passed' : contactMission(k) === m ? '▶ Available' : '🔒 Locked';
     return `<div class="ml"><span class="l" style="background:${c.color}">${k}</span><span><b>${m.name}</b> <span class="muted">· ${m.topic ? TOPICS[m.topic].name : 'All four topics'}</span></span><span>${st}</span></div>`; }).join('')).join('')
       + `<div class="ml" style="margin-top:12px"><span class="l" style="background:#ff5252">L</span><span><b>Licence Board exam</b> <span class="muted">· CAAS Office</span></span><span>${save.exam >= 8 ? `✅ ${save.exam}/10` : examOpen() ? '▶ Available' : '🔒 After the final mission'}</span></div>`
-      + `<div class="ml"><span class="l" style="background:#9b8cff">B</span><span><b>Design Board exam</b> <span class="muted">· Design Cay, Dr. Ortiz</span></span><span>${(save.exam2 || 0) >= 8 ? `✅ ${save.exam2}/10` : cayDone() ? '▶ Available' : '🔒 After the six Design Cay missions'}</span></div>`;
-  else if (menuTab === 'map') body = '<canvas id="bigmap" width="1050" height="500" style="width:100%;display:block;margin:auto;border-radius:6px"></canvas><div class="muted" style="text-align:center;margin-top:6px">Coloured letters = contacts · ★ yellow = current objective · R = Records Desk · white arrow = you</div>';
+      + `<div class="ml"><span class="l" style="background:#9b8cff">B</span><span><b>Design Board exam</b> <span class="muted">· Design Cay, Dr. Ortiz</span></span><span>${(save.exam2 || 0) >= 8 ? `✅ ${save.exam2}/10` : cayDone() ? '▶ Available' : '🔒 After the six Design Cay missions'}</span></div>`
+      + `<div class="ml"><span class="l" style="background:#ffb347">C</span><span><b>Compliance Board exam</b> <span class="muted">· Compliance Key, Inspector Ravi</span></span><span>${(save.exam3 || 0) >= 8 ? `✅ ${save.exam3}/10` : keyDone() ? '▶ Available' : '🔒 After the eight Compliance Key missions'}</span></div>`;
+  else if (menuTab === 'map') body = '<canvas id="bigmap" width="1050" height="805" style="width:100%;max-height:70vh;object-fit:contain;display:block;margin:auto;border-radius:6px"></canvas><div class="muted" style="text-align:center;margin-top:6px">Coloured letters = contacts · ★ yellow = current objective · R = Records Desk · white arrow = you</div>';
   else if (menuTab === 'notebook') body = Object.entries(TOPICS).map(([t, o]) => { const ks = Object.keys(FACTS).filter(k => FACTS[k].t === t), n = ks.filter(k => save.facts[k]).length;
     return `<div class="ey" style="--tc:${o.color};margin-top:14px">${o.name} · ${n}/${ks.length}</div>${ks.map(k => factHTML(k, !save.facts[k])).join('')}`; }).join('');
   else if (menuTab === 'stats') { const s = save.stats, f = Object.keys(save.facts).length, nf = Object.keys(FACTS).length;
-    body = `<div class="opts" style="grid-template-columns:repeat(2,1fr)">${[['Missions passed', `${Object.keys(save.done).length}/${MISSIONS.length}`], ['Notebook', `${f}/${nf}`], ['Logbook pages', `${Object.keys(save.pages).length}/${PAGES.length}`], ['Cash', '$' + save.cash], ['First-try answers', s.right], ['Wrong answers', s.wrong], ['Vehicles taken', s.jacked], ['Pedestrians bumped', s.peds], ['Times busted', s.busted], ['Licence Board', save.exam ? save.exam + '/10' : '–'], ['Design Board', save.exam2 ? save.exam2 + '/10' : '–']].map(([a, b]) => `<div class="ml" style="grid-template-columns:1fr auto"><span class="muted">${a}</span><b>${b}</b></div>`).join('')}</div>`; }
+    body = `<div class="opts" style="grid-template-columns:repeat(2,1fr)">${[['Missions passed', `${Object.keys(save.done).length}/${MISSIONS.length}`], ['Notebook', `${f}/${nf}`], ['Logbook pages', `${Object.keys(save.pages).length}/${PAGES.length}`], ['Cash', '$' + save.cash], ['First-try answers', s.right], ['Wrong answers', s.wrong], ['Vehicles taken', s.jacked], ['Pedestrians bumped', s.peds], ['Times busted', s.busted], ['Licence Board', save.exam ? save.exam + '/10' : '–'], ['Design Board', save.exam2 ? save.exam2 + '/10' : '–'], ['Compliance Board', save.exam3 ? save.exam3 + '/10' : '–']].map(([a, b]) => `<div class="ml" style="grid-template-columns:1fr auto"><span class="muted">${a}</span><b>${b}</b></div>`).join('')}</div>`; }
   else body = `<div class="keys">${TOUCH ? 'Stick: walk / drive (push fully, or hold RUN, to sprint) · ENTER/EXIT: get in or out · BRAKE: handbrake · CAM: camera · ☰: this menu<br>Aircraft: ENTER next to a plane · stick to climb/dive and bank (throttle is automatic, BRAKE slows) · ENTER/EXIT in the air to bail out, again to open the parachute<br>Helicopters: stick to fly forward and turn · ▲ UP / ▼ DOWN to climb and descend' :
     '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / arrows – walk or drive · hold <kbd>Shift</kbd> to run (uses stamina)<br><kbd>F</kbd> enter / exit / take a vehicle · <kbd>Space</kbd> handbrake · <kbd>H</kbd> horn<br><kbd>R</kbd> radio (Ramp FM / Tower Talk reads your notebook) · <kbd>C</kbd> camera · mouse wheel zoom<br><kbd>Esc</kbd> missions · <kbd>M</kbd> map · <kbd>N</kbd> notebook<br><b>Aircraft</b>: <kbd>F</kbd> next to a plane to board · <kbd>W</kbd>/<kbd>S</kbd> throttle · <kbd>↑</kbd> climb <kbd>↓</kbd> dive · <kbd>A</kbd><kbd>D</kbd> bank · <kbd>Space</kbd> brakes · <kbd>F</kbd> in the air to bail out, <kbd>F</kbd> again to open the parachute<br><b>Helicopters</b>: <kbd>↑</kbd>/<kbd>Space</kbd> climb · <kbd>↓</kbd>/<kbd>Shift</kbd> descend · <kbd>W</kbd>/<kbd>S</kbd> forward/back · <kbd>A</kbd><kbd>D</kbd> turn · <kbd>←</kbd><kbd>→</kbd> strafe · land on the ground or a rooftop'}</div>
     <div class="fact" style="--tc:#ffc83d;margin-top:12px"><b>How it works.</b> Walk or drive into a contact's coloured marker to start a mission. Taking occupied vehicles, hitting pedestrians, ramming inspectors and wrong calls add <b>★ heat</b>: CAAS inspectors chase you. Stay out of sight to lose it, or clear it by answering a question at the pink <b style="color:#ff6fc8">R</b> Records Desk. If they box you in, you're <b>busted</b>. Hidden <b>logbook pages</b> around the island add notebook entries.</div>`;
@@ -1249,34 +1279,40 @@ function renderMenu() {
 }
 
 /* ───────── exam & certificate ───────── */
+const BOARDS = {
+  licence: { bank: () => EXAM, name: 'Licence Board', key: 'exam', ey: 'CAAS Licence Board', who: 'Inspector Farah', color: '#ff5252', game: 'PENCIL WHIP', topics: 'Aircraft Maintenance · Certificate of Release to Service · Certificate of Maintenance Review · Technical Log' },
+  design: { bank: () => DEXAM, name: 'Design Board', key: 'exam2', ey: 'Design Cay · Design Board', who: 'Dr. Ortiz', color: '#9b8cff', game: 'PENCIL WHIP – DESIGN CAY', topics: 'Type Certificate · Supplemental Type Certificate · Singapore Technical Standard Order' },
+  key: { bank: () => CEXAM, name: 'Compliance Board', key: 'exam3', ey: 'Compliance Key · Compliance Board', who: 'Inspector Ravi', color: '#ffb347', game: 'PENCIL WHIP – COMPLIANCE KEY', topics: 'Repair Design Approval · Design Organisation Approval · Production Organisation Approval · Service Bulletins & Airworthiness Directives' }
+};
 function openExam(kind) {
-  const D = kind === 'design', bank = D ? DEXAM : EXAM, board = D ? 'Design Board' : 'Licence Board', key = D ? 'exam2' : 'exam';
-  const qs = shuffle(bank).slice(0, 10); let i = 0, score = 0; const missed = [];
+  const B = BOARDS[kind || 'licence'], qs = shuffle(B.bank()).slice(0, 10); let i = 0, score = 0; const missed = [];
   const ask = () => {
     if (i >= qs.length) return result(); const s = qs[i];
-    panelQuiz(Object.assign({ single: true }, s), ok => { if (ok) score++; else missed.push(s); i++; setTimeout(ask, 0); }, null, `${board} · Question ${i + 1} of ${qs.length} · Score ${score}`);
+    panelQuiz(Object.assign({ single: true }, s), ok => { if (ok) score++; else missed.push(s); i++; setTimeout(ask, 0); }, null, `${B.name} · Question ${i + 1} of ${qs.length} · Score ${score}`);
   };
   const result = () => {
-    const pass = score >= 8; if (score > (save[key] || 0)) save[key] = score; persist(); pass ? sfx.pass() : sfx.fail(); hudRank();
-    showPanel(`<div class="card" style="--tc:${D ? '#9b8cff' : '#ff5252'}"><div class="ey">${D ? 'Design Cay · Design Board' : 'CAAS Licence Board'}</div><h2>${pass ? 'Approved' : 'Not yet'} · ${score}/10</h2>
+    const pass = score >= 8; if (score > (save[B.key] || 0)) save[B.key] = score; persist(); pass ? sfx.pass() : sfx.fail(); hudRank();
+    showPanel(`<div class="card" style="--tc:${B.color}"><div class="ey">${B.ey}</div><h2>${pass ? 'Approved' : 'Not yet'} · ${score}/10</h2>
       ${pass ? `<div class="cert"><div class="ey" style="--tc:#ffc83d">Certificate of completion</div><div style="margin-top:8px">This certifies that</div><div class="nm">${esc(save.name || 'Engineer')}</div>
-      <div>completed <b>PENCIL WHIP${D ? ' – DESIGN CAY' : ''}</b> and passed the ${board} with <b>${score}/10</b><br><span class="muted">${D ? 'Type Certificate · Supplemental Type Certificate · Singapore Technical Standard Order' : 'Aircraft Maintenance · Certificate of Release to Service · Certificate of Maintenance Review · Technical Log'}</span></div></div>` : `<div class="muted">You need 8 out of 10. Review the Notebook (N), then talk to ${D ? 'Dr. Ortiz' : 'Inspector Farah'} again.</div>`}
+      <div>completed <b>${B.game}</b> and passed the ${B.name} with <b>${score}/10</b><br><span class="muted">${B.topics}</span></div></div>` : `<div class="muted">You need 8 out of 10. Review the Notebook (N), then talk to ${B.who} again.</div>`}
       ${missed.length ? `<div class="ey" style="margin-top:14px">Review these</div>${missed.map(q => `<div class="fact" style="--tc:#ff4b4b"><b>${q.q}</b><br>✔ ${q.a} <span class="muted">– ${q.why} (${q.s})</span></div>`).join('')}` : ''}
-      <div class="row sp"><span class="muted">${pass ? 'The island is yours – keep exploring and finding logbook pages.' : ''}</span><button class="btn" id="go">Back to the island ▸</button></div></div>`);
+      <div class="row sp"><span class="muted">${pass ? 'The islands are yours – keep exploring and finding logbook pages.' : ''}</span><button class="btn" id="go">Back to the island ▸</button></div></div>`);
     $('go').onclick = () => { sfx.click(); hidePanel(); };
   };
   ask();
 }
 
 /* ───────── minimap ───────── */
-const MAPC = document.createElement('canvas'); MAPC.width = 2100; MAPC.height = 1000; const MS_SC = 2; // px per metre; world x -250..800, z -265..235
+const MAPC = document.createElement('canvas'); MAPC.width = 2100; MAPC.height = 1610; const MS_SC = 2; // px per metre; world x -250..800, z -265..540
 const W2M = (x, z) => [(x + 250) * MS_SC, (z + 265) * MS_SC];
-{ const x = MAPC.getContext('2d'); x.fillStyle = '#2b6fa5'; x.fillRect(0, 0, 2100, 1000);
+{ const x = MAPC.getContext('2d'); x.fillStyle = '#2b6fa5'; x.fillRect(0, 0, 2100, 1610);
   const r = (x0, z0, x1, z1, c) => { const [a, b] = W2M(x0, z0), [cc, d] = W2M(x1, z1); x.fillStyle = c; x.fillRect(a, b, cc - a, d - b); };
   r(-238, -262, 238, 212, '#5f9a52'); r(-238, -262, 238, -80, '#9a9ea4'); r(-238, 165, 238, 212, '#d8c890'); r(-229, 205, -221, 222, '#8a6a45'); r(-235, -248, 235, -216, '#4a4e55');
   for (let i = 0; i < NX; i++) r(XL[i] - RH, ZL[0], XL[i] + RH, ZL[NZ - 1], '#3b3f46'); for (let j = 0; j < NZ; j++) r(XL[0], ZL[j] - RH, XL[NX - 1], ZL[j] + RH, ZL[j] <= -80 ? '#7c8188' : '#3b3f46');
   r(470, -150, 790, 150, '#d8c890'); r(484, -136, 776, 136, '#5f9a52'); r(230, -8, 480, 8, '#3b3f46'); r(505, -147, 755, -129, '#4a4e55');
   [[232, -7, 500, 7], [500, -7, 760, 7], [500, -127, 760, -113], [500, 113, 760, 127], [493, -127, 507, 127], [753, -127, 767, 127]].forEach(q => r(q[0], q[1], q[2], q[3], '#3b3f46'));
+  r(470, 260, 790, 520, '#d8c890'); r(484, 274, 776, 506, '#5f9a52'); r(622, 145, 638, 265, '#3b3f46');
+  [[623, 127, 637, 290], [500, 283, 760, 297], [500, 483, 760, 497], [500, 383, 760, 397], [493, 283, 507, 497], [753, 283, 767, 497]].forEach(q => r(q[0], q[1], q[2], q[3], '#3b3f46'));
   COL.forEach(c => !c.plane && r(c.x0, c.z0, c.x1, c.z1, c.h > 6 ? '#1d2430' : '#3d4654')); }
 const mini = $('mini'), mx = mini.getContext('2d');
 function routePts() {
@@ -1313,7 +1349,7 @@ function drawMini() {
 function drawBigMap(cv) {
   const x = cv.getContext('2d'), k = cv.width / MAPC.width; x.drawImage(MAPC, 0, 0, cv.width, cv.height);
   const at = (wx, wz) => { const [a, b] = W2M(wx, wz); return [a * k, b * k]; };
-  [['Hangar', -160, -124], ['Stand A', -80, -100], ['Stand B', 0, -100], ['Stand C', 80, -100], ['GA Apron', 160, -100], ['Workshop', -160, -52], ['Ops Centre', -80, -50], ['Crew Centre', 0, -52], ['Quality', 80, -52], ['Log Book Archive', 160, -66], ['Training Centre', -160, 52], ['CAAS Office', 80, 54], ['Car park', -80, 44], ['Mall', 0, 120], ['Runway', 0, -232], ['Jetty', -225, 200], ['Bridge', 355, -14], ['DESIGN CAY', 630, -100], ['TC Centre', 560, -58], ['DOA', 630, -58], ['STC Hangar', 705, -58], ['STSO Plant', 560, 58], ['Production', 630, 58], ['Data Vault', 705, 58], ['Test Strip', 630, -138]].forEach(([n, wx, wz]) => {
+  [['Hangar', -160, -124], ['Stand A', -80, -100], ['Stand B', 0, -100], ['Stand C', 80, -100], ['GA Apron', 160, -100], ['Workshop', -160, -52], ['Ops Centre', -80, -50], ['Crew Centre', 0, -52], ['Quality', 80, -52], ['Log Book Archive', 160, -66], ['Training Centre', -160, 52], ['CAAS Office', 80, 54], ['Car park', -80, 44], ['Mall', 0, 120], ['Runway', 0, -232], ['Jetty', -225, 200], ['Bridge', 355, -14], ['DESIGN CAY', 630, -100], ['TC Centre', 560, -58], ['DOA', 630, -58], ['STC Hangar', 705, -58], ['STSO Plant', 560, 58], ['Production', 630, 58], ['Data Vault', 705, 58], ['Test Strip', 630, -138], ['COMPLIANCE KEY', 630, 310], ['Repair Design', 560, 340], ['DOA House', 630, 340], ['SB/AD Centre', 705, 340], ['POA Factory', 560, 440], ['Quality Release', 630, 440], ['9V-VBF', 705, 455]].forEach(([n, wx, wz]) => {
     const [a, b] = at(wx, wz); x.font = '700 15px Segoe UI, Arial'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.lineWidth = 4; x.strokeStyle = '#000'; x.strokeText(n, a, b); x.fillStyle = '#fff'; x.fillText(n, a, b); });
   const rp = routePts(); if (rp) { x.strokeStyle = '#ff6fc8'; x.lineWidth = 5; x.beginPath(); rp.forEach(([wx, wz], i) => { const [a, b] = at(wx, wz); i ? x.lineTo(a, b) : x.moveTo(a, b); }); x.stroke(); }
   blips().forEach(b => { const [a, c] = at(b.x, b.z); if (b.dot) { x.fillStyle = b.c; x.beginPath(); x.arc(a, c, 9, 0, 6.283); x.fill(); x.strokeStyle = '#000'; x.lineWidth = 2; x.stroke(); } else { x.fillStyle = '#000'; x.beginPath(); x.arc(a, c, 15, 0, 6.283); x.fill(); x.fillStyle = b.c; x.font = '900 20px Impact, Arial Black'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(b.t, a, c + 1); } });
@@ -1363,7 +1399,7 @@ function title() {
       <div class="opts" style="grid-template-columns:repeat(2,1fr);margin-top:12px">${Object.entries(TOPICS).map(([k, t]) => { const ks = Object.keys(FACTS).filter(f => FACTS[f].t === k), n = ks.filter(f => save.facts[f]).length; return `<div class="ml" style="grid-template-columns:auto 1fr auto"><span style="width:12px;height:12px;border-radius:50%;background:${t.color}"></span><b>${t.name}</b><span class="muted">${n}/${ks.length}</span></div>`; }).join('')}</div>
       <div class="row"><input type="text" id="nm" maxlength="18" placeholder="Your name (for the certificate)" value="${esc(save.name)}" autocomplete="off" style="flex:1;min-width:200px"></div>
       <div class="keys" style="margin-top:10px">${TOUCH ? 'Left stick: walk/drive · RUN: sprint · ENTER/EXIT button: get in vehicles · BRAKE: handbrake' : '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> walk / drive · <kbd>Shift</kbd> run · <kbd>F</kbd> enter or take a vehicle · <kbd>Space</kbd> handbrake · <kbd>Esc</kbd> menu · <kbd>M</kbd> map · <kbd>N</kbd> notebook'}</div>
-      <div class="row sp"><span class="muted">${started ? `${Object.keys(save.done).length}/${MISSIONS.length} missions · $${save.cash} · progress saved on this device` : `${MISSIONS.length} missions on two islands · ${PAGES.length} hidden logbook pages · two exams`}</span>
+      <div class="row sp"><span class="muted">${started ? `${Object.keys(save.done).length}/${MISSIONS.length} missions · $${save.cash} · progress saved on this device` : `${MISSIONS.length} missions on three islands · ${PAGES.length} hidden logbook pages · two exams`}</span>
       <div class="row" style="margin:0">${started ? '<button class="btn g" id="reset">New game</button>' : ''}<button class="btn" id="start" style="font-size:24px;padding:12px 30px">${started ? 'Continue ▸' : 'Start ▸'}</button></div></div>
     </div></div>`);
   mode = 'title';
@@ -1379,7 +1415,7 @@ function begin() {
       ['N', 'But a crew called <b>PENCIL WHIP</b> has been signing off work that was never done.'],
       ['N', "You're a newly licensed aircraft engineer. Work for the contacts on your radar, learn the rules, and shut Pencil Whip down."],
       ['N', "Drive anything – press <b>F</b> near a vehicle. Break the rules and <b>CAAS inspectors</b> come after you <b style=\"color:#ff4b4b\">★</b>."],
-      ['N', "And east across the bridge lies <b>Design Cay</b> – the island where aircraft designs get approved: Type Certificates, STCs and STSOs."]
+      ['N', "And east across the bridge lies <b>Design Cay</b> – the island where aircraft designs get approved: Type Certificates, STCs and STSOs. South of it, across another bridge, is <b>Compliance Key</b>: repairs, DOA, POA, Service Bulletins and ADs."]
     ], () => { save.intro = true; persist(); help('Head to <b style="color:#4fc3ff">O</b> on your radar – Rina at the <b>Ops Centre</b>. Walk into her blue marker.', 9000); });
   } else { const nx = Object.keys(CONTACTS).find(k => !CONTACTS[k].island && contactMission(k)); if (nx) help(`Next: <b style="color:${CONTACTS[nx].color}">${nx}</b> – ${CONTACTS[nx].name}.`, 6000); }
 }
@@ -1388,7 +1424,7 @@ function begin() {
 { const t = L('training'); P.x = t.x - 4; P.z = t.z + 4; P.h = Math.PI * 0.75; }
 spawnVeh('van', -150, 14, -Math.PI / 2); spawnVeh('sedan', -172, 14, Math.PI / 2, null, 0xd8343a);
 spawnVeh('follow', -138, -94, Math.PI / 2); spawnVeh('tug', -62, -96, Math.PI / 2); spawnVeh('tug', 18, -96, -Math.PI / 2); spawnVeh('cart', 100, -96, Math.PI / 2); spawnVeh('truck', 140, -96, -Math.PI / 2);
-spawnVeh('van', -100, -14, 0); spawnVeh('van', 600, 22, Math.PI / 2); spawnVeh('sedan', 668, -22, -Math.PI / 2, null, 0x5b4bc4); spawnVeh('follow', 520, -132, Math.PI / 2); spawnVeh('cart', 46, -14, Math.PI); spawnVeh('caas', 64, 16, Math.PI / 2); spawnVeh('caas', 96, 16, -Math.PI / 2);
+spawnVeh('van', -100, -14, 0); spawnVeh('van', 600, 22, Math.PI / 2); spawnVeh('sedan', 668, -22, -Math.PI / 2, null, 0x5b4bc4); spawnVeh('follow', 520, -132, Math.PI / 2); spawnVeh('van', 597, 410, Math.PI / 2, null, 0x7a3db8); spawnVeh('tug', 672, 470, -Math.PI / 2); spawnVeh('cart', 46, -14, Math.PI); spawnVeh('caas', 64, 16, Math.PI / 2); spawnVeh('caas', 96, 16, -Math.PI / 2);
 for (let i = 0; i < 4; i++) for (let k = 0; k < 2; k++) if (Math.random() < 0.8) spawnVeh(Math.random() < 0.2 ? 'van' : 'sedan', -98 + i * 9, 36 + k * 16, k ? Math.PI : 0);
 for (let i = 0; i < 12; i++) spawnTraffic(false, false);
 for (let i = 0; i < 4; i++) spawnTraffic(false, true);
@@ -1412,7 +1448,8 @@ function update(dt) {
   $('clock').textContent = clockStr();
   document.body.classList.toggle('inveh', !!(P.veh || P.plane)); document.body.classList.toggle('inheli', !!(P.plane && P.plane.T.heli));
   updatePlanes(dt);
-  if (!save.cay && P.x > 470 && !P.plane && !P.para) { save.cay = 1; persist(); big('DESIGN CAY', 'Type Certificate · STC · STSO', '', 3200); help('Contacts here: <b style="color:#9b8cff">T</b> Type Certification · <b style="color:#ff9b42">S</b> STC Mod Hangar · <b style="color:#3fe0c5">P</b> STSO Parts Plant. Finish all six for the <b>Design Board</b> exam.', 10000); }
+  if (!save.key && P.x > 470 && P.z > 258 && !P.plane && !P.para) { save.key = 1; persist(); big('COMPLIANCE KEY', 'Repairs · DOA · POA · SB / AD', '', 3200); help('Contacts here: <b style="color:#ff6b8b">M</b> Repair Design · <b style="color:#7fb2ff">D</b> DOA · <b style="color:#c6e85a">F</b> POA Factory · <b style="color:#ffb347">A</b> SB / AD. Finish all eight for the <b>Compliance Board</b> exam.', 10000); }
+  if (!save.cay && P.x > 470 && P.z < 160 && !P.plane && !P.para) { save.cay = 1; persist(); big('DESIGN CAY', 'Type Certificate · STC · STSO', '', 3200); help('Contacts here: <b style="color:#9b8cff">T</b> Type Certification · <b style="color:#ff9b42">S</b> STC Mod Hangar · <b style="color:#3fe0c5">P</b> STSO Parts Plant. Finish all six for the <b>Design Board</b> exam.', 10000); }
   updateMission(dt); updateContacts(dt);
   trafficT -= dt; if (trafficT <= 0) { trafficT = 3; const n = vehicles.filter(v => v.ai.role === 'traffic' && v.driver === 'npc').length; if (n < 14 && vehicles.length < 48) spawnTraffic(true, Math.random() < 0.25); }
   // engine note

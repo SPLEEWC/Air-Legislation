@@ -7,7 +7,11 @@ const TOPICS = {
   tlog: { name: 'Technical Log', color: '#ff7ad9' },
   tc:   { name: 'Type Certificate', color: '#9b8cff', island: true },
   stc:  { name: 'Supplemental Type Certificate', color: '#ff9b42', island: true },
-  stso: { name: 'Singapore Technical Standard Order', color: '#3fe0c5', island: true }
+  stso: { name: 'Singapore Technical Standard Order', color: '#3fe0c5', island: true },
+  rda:  { name: 'Repair Design Approval', color: '#ff6b8b', island: 'key' },
+  doa:  { name: 'Design Organisation Approval', color: '#7fb2ff', island: 'key' },
+  poa:  { name: 'Production Organisation Approval', color: '#c6e85a', island: 'key' },
+  sbad: { name: 'Service Bulletins & Airworthiness Directives', color: '#ffb347', island: 'key' }
 };
 
 /* Notebook facts – unlocked by mission dialogue and hidden logbook pages */
@@ -60,11 +64,34 @@ const FACTS = {
   so3:  { t: 'stso', s: 'Slide 86', x: 'The STSO holder keeps the complete and current technical data file until <b>2 years after production stops</b>.' },
   so4:  { t: 'stso', s: 'Slide 89 · Subpart J', x: 'A <b>Production Organisation Approval (POA)</b> holder may produce products and articles and issue an <b>Authorised Release Certificate CAAS(AW)95</b> for the articles produced.' },
   so5:  { t: 'stso', s: 'Slide 89', x: 'A POA holder must <b>hold DOA</b> or have an <b>arrangement with a DOA holder</b>.' },
-  so6:  { t: 'stso', s: 'Slides 82-86', x: 'Tell them apart: <b>TC</b> → a whole new aircraft type · <b>STC</b> → a major change to an existing type design · <b>STSO</b> → an article that is installed on aircraft.' }
+  so6:  { t: 'stso', s: 'Slides 82-86', x: 'Tell them apart: <b>TC</b> → a whole new aircraft type · <b>STC</b> → a major change to an existing type design · <b>STSO</b> → an article that is installed on aircraft.' },
+  // ── Compliance Key (SAR-21 Subparts F, G, J and SAR Part 39) ──
+  rp1:  { t: 'rda',  s: 'Slide 87 · SAR-21 Subpart F', x: 'Every aircraft has technical manuals with <b>approved maintenance and repair procedures</b> – e.g. the <b>SRM (Structural Repair Manual)</b> and <b>AMM (Aircraft Maintenance Manual)</b>.' },
+  rp2:  { t: 'rda',  s: 'Slide 87', x: 'Any repair work <b>not stated in the manuals</b> constitutes a <b>repair design</b>.' },
+  rp3:  { t: 'rda',  s: 'Slide 87', x: 'A <b>minor repair design</b> can be approved by <b>DOA holders</b>.' },
+  rp4:  { t: 'rda',  s: 'Slide 87', x: 'A <b>major repair design</b> can <b>only be approved by the Authority</b>.' },
+  doa1: { t: 'doa',  s: 'Slide 88 · SAR-21 Subpart G', x: 'Holders of a <b>TC, STC, modification/repair approval or STSO</b> certificate of approval shall obtain <b>DOA</b> status.' },
+  doa2: { t: 'doa',  s: 'Slide 88', x: 'DOA privileges: <b>develop design data</b> · issue a <b>statement of compliance</b> to airworthiness design standards · <b>approve minor changes</b> in design · enter into an arrangement with the Authority for <b>production</b> of the approved design.' },
+  doa3: { t: 'doa',  s: 'Slide 88', x: 'Only <b>design signatories</b> are authorised to certify design data and issue statements of compliance.' },
+  doa4: { t: 'doa',  s: 'Slide 115', x: 'In Singapore (Jan 2022): <b>14</b> design organisations with DOA · <b>22</b> production organisations with POA · <b>450</b> maintenance organisations with SAR-145 approval.' },
+  poa1: { t: 'poa',  s: 'Slide 89 · SAR-21 Subpart J', x: 'Organisations that produce products or articles must hold <b>POA</b> – or a <b>letter of agreement for production without POA</b>.' },
+  poa2: { t: 'poa',  s: 'Slide 89', x: 'A POA holder must <b>hold DOA</b> or have an <b>arrangement with a DOA holder</b>.' },
+  poa3: { t: 'poa',  s: 'Slide 89', x: 'POA privileges: <b>produce products and articles</b>, and issue an <b>Authorised Release Certificate CAAS(AW)95</b> for the articles produced.' },
+  poa4: { t: 'poa',  s: 'Slide 90', x: 'On the CAAS(AW)95, the <b>New Parts</b> block certifies the items were <b>manufactured in conformity to approved design data</b> and are in condition for safe operation.' },
+  poa5: { t: 'poa',  s: 'Slides 132-134', x: 'Don\'t mix them up: a <b>POA</b> issues <b>CAAS(AW)95</b> for articles it produces; a SAR-145 Subpart D <b>distributor</b> issues <b>CAAS(AW)96</b> for new components it stores and re-issues.' },
+  sb1:  { t: 'sbad', s: 'Slide 92', x: 'A <b>Service Bulletin (SB)</b> is issued by the <b>TC holder, STC holder or component manufacturer</b> to operators – design improvements, extra maintenance procedures or safety inspections.' },
+  sb2:  { t: 'sbad', s: 'Slide 92', x: 'Implementing an SB is <b>optional</b> for operators.' },
+  sb3:  { t: 'sbad', s: 'Slide 92', x: 'The CAA of the <b>State of Design</b> may <b>mandate</b> an SB by issuing an <b>AD that refers to it</b>.' },
+  ad1:  { t: 'sbad', s: 'Slide 93 · SAR Part 39', x: 'An <b>Airworthiness Directive (AD)</b> is issued or adopted by the Authority and <b>mandates actions</b> to restore an acceptable level of safety when evidence shows it may be compromised.' },
+  ad2:  { t: 'sbad', s: 'Slide 93', x: 'ADs effective on Singapore-registered aircraft can be issued by <b>CAAS</b> or by the CAA of the <b>State of Design</b>.' },
+  ad3:  { t: 'sbad', s: 'Slide 93', x: '<b>No aircraft shall fly</b> unless it complies with <b>each applicable AD</b> – or an alternative means of compliance – <b>within the compliance time</b>.' },
+  ad4:  { t: 'sbad', s: 'Slide 96', x: '1 Apr 2011: a B737-300 made an emergency landing after <b>in-flight fatigue failure of fuselage rivet lap joints</b>. Boeing issued an <b>SB 2 days later</b>; the FAA issued an <b>Emergency AD 4 days later</b> mandating inspections.' },
+  ad5:  { t: 'sbad', s: 'Slide 95 · SAR 39', x: 'CAAS may issue an AD if it believes on reasonable grounds that an <b>unsafe condition</b> exists and is likely to exist or develop in other aircraft or components of the <b>same design</b>.' },
+  ad6:  { t: 'sbad', s: 'Slide 94', x: 'FAA ADs are <b>legally enforceable</b> regulations (14 CFR Part 39) to correct an unsafe condition in a product – aircraft, engine, propeller or appliance. Urgent cases use an <b>Emergency AD</b>.' }
 };
 
 /* Hidden logbook pages (collectibles) – each reveals a fact */
-const PAGES = ['mx3', 'mx6', 'mx9', 'crs2', 'crs6', 'crs9', 'cmr3', 'cmr4', 'cmr5', 'tl4', 'tl5', 'tl6', 'tc3', 'stc2', 'stc7', 'so3'];
+const PAGES = ['mx3', 'mx6', 'mx9', 'crs2', 'crs6', 'crs9', 'cmr3', 'cmr4', 'cmr5', 'tl4', 'tl5', 'tl6', 'tc3', 'stc2', 'stc7', 'so3', 'rp2', 'doa4', 'poa5', 'ad6'];
 
 const CONTACTS = {
   O: { name: 'Rina Okafor', role: 'Maintenance Planning', loc: 'ops',     color: '#4fc3ff', look: { shirt: 0x2b7bd6, hat: 0xffffff } },
@@ -74,7 +101,11 @@ const CONTACTS = {
   I: { name: 'Inspector Farah', role: 'CAAS Airworthiness', loc: 'caas', color: '#ff5252', look: { shirt: 0x1a237e, hat: 0x1a237e } },
   T: { name: 'Dr. Lena Ortiz', role: 'Type Certification · Design Cay', loc: 'tcc', color: '#9b8cff', island: true, look: { shirt: 0x5b4bc4, hat: 0xffffff } },
   S: { name: 'Marco Lim', role: 'DOA Design Engineer · Design Cay', loc: 'modh', color: '#ff9b42', island: true, look: { shirt: 0xe0701a, hat: 0x222222 } },
-  P: { name: 'Priya Nair', role: 'STSO Parts Plant · Design Cay', loc: 'plant', color: '#3fe0c5', island: true, look: { shirt: 0x139a86, hat: 0xffd21a } }
+  P: { name: 'Priya Nair', role: 'STSO Parts Plant · Design Cay', loc: 'plant', color: '#3fe0c5', island: true, look: { shirt: 0x139a86, hat: 0xffd21a } },
+  M: { name: 'Hana Yusof', role: 'Repair Design Engineer · Compliance Key', loc: 'rdo', color: '#ff6b8b', island: 'key', look: { shirt: 0xc2335a, hat: 0xffffff } },
+  D: { name: 'Victor Tan', role: 'Head of Design (DOA) · Compliance Key', loc: 'doah', color: '#7fb2ff', island: 'key', look: { shirt: 0x2f5fbf, hat: 0x111a33 } },
+  F: { name: 'Grace Lee', role: 'POA Factory Manager · Compliance Key', loc: 'poaf', color: '#c6e85a', island: 'key', look: { shirt: 0x6f8f1f, hat: 0xffd21a } },
+  A: { name: 'Inspector Ravi', role: 'CAAS Continuing Airworthiness · Compliance Key', loc: 'sbad', color: '#ffb347', island: 'key', look: { shirt: 0x1a237e, hat: 0x1a237e } }
 };
 
 const Q = (q, a, wrong, why, s) => ({ t: 'quiz', q, a, wrong, why, s });
@@ -341,6 +372,136 @@ const MISSIONS = [
     items: [['A brand-new aircraft type', 0], ['A major change to an existing type design', 1], ['An avionics unit fitted to many aircraft types', 2], ['Relocating the galley on a 9V A320 (weight & balance)', 1], ['A new seat belt assembly design', 2]],
     why: 'TC → new type · STC → major change to a type design · STSO → article installed on aircraft.' },
   Q('Production of an STSO article stops on 1 Jan 2026. Until when must the technical data file be kept?', '1 Jan 2028 – 2 years after production stops', ['1 Jan 2027', 'For the life of every aircraft'], 'Slide 86: until 2 years from the date of cessation of production.', 'Slide 86')
+] },
+/* ───── Compliance Key · M · Repair Design Approval ───── */
+{ id: 'k1', c: 'M', island: 'key', topic: 'rda', name: 'By the Book', cash: 800, steps: [
+  { t: 'talk', lines: [
+    ['M', "Welcome to <b>Compliance Key</b>. I'm Hana Yusof – I design repairs."],
+    ['M', "Every aircraft comes with technical manuals full of <b>approved repair procedures</b> – the <b>SRM</b>, Structural Repair Manual, and the <b>AMM</b>, Aircraft Maintenance Manual.", 'rp1'],
+    ['M', "If the damage is covered by the manuals, you just follow them. Any repair <b>not stated in the manuals</b> is a <b>repair design</b> – and that needs approval.", 'rp2']] },
+  { t: 'choose', time: 70, text: 'A small dent on a fuselage skin panel is <b>within the SRM allowable limits</b>. How is it repaired?', opts: [
+    { loc: 'c1', label: 'FOLLOW THE SRM\nno repair design needed', ok: true },
+    { loc: 'c2', label: 'NEW REPAIR DESIGN\nneeds approval', ok: false, why: 'The damage is covered by the SRM – the approved manual procedure is used.' },
+    { loc: 'c3', label: 'APPLY FOR AN STC', ok: false, why: 'An STC approves a major change to a type design – not a routine repair from the manual.' }],
+    why: 'Covered by the manual → use the approved SRM procedure.' },
+  { t: 'talk', lines: [['M', "The wind took my damage reports. Collect only the ones that need a <b>new repair design</b> – the markers won't tell you which."]] },
+  { t: 'collect', blind: true, time: 110, text: 'Collect the <b>3 jobs that need a repair design</b> (not covered by the manuals).', items: [
+    { loc: 'c4', label: 'Crack longer than\nthe SRM limits', ok: true },
+    { loc: 'c6', label: 'Damage in an area\nthe SRM does not cover', ok: true },
+    { loc: 'c2', label: 'Corrosion beyond\npublished limits', ok: true },
+    { loc: 'c1', label: 'Tyre change\nper the AMM', ok: false, why: 'The AMM covers it – no repair design needed.' },
+    { loc: 'c5', label: 'Skin dent within\nSRM allowable limits', ok: false, why: 'Within the SRM limits – follow the manual.' },
+    { loc: 'c3', label: 'Light bulb replacement\nper the AMM', ok: false, why: 'A routine AMM task, not a repair design.' }] },
+  Q('What does SRM stand for?', 'Structural Repair Manual', ['Standard Release Memo', 'Service Rectification Module'], 'Slide 87: SRM – Structural Repair Manual; AMM – Aircraft Maintenance Manual.', 'Slide 87')
+] },
+{ id: 'k2', c: 'M', island: 'key', topic: 'rda', name: 'Minor or Major Repair', cash: 1000, steps: [
+  { t: 'talk', lines: [
+    ['M', "Repair designs come in two sizes. A <b>minor repair design</b> can be approved by a <b>DOA holder</b>.", 'rp3'],
+    ['M', "A <b>major repair design</b> can <b>only be approved by the Authority</b>.", 'rp4']] },
+  { t: 'sort', title: 'Who approves it?', prompt: 'Who can approve each repair design?', bins: ['DOA holder', 'Authority only'],
+    items: [['Minor repair design: doubler on a non-structural fairing', 0], ['Major repair design: wing spar splice', 1], ['Minor repair design: cabin floor panel insert', 0], ['Major repair design: pressure bulkhead repair', 1]],
+    why: 'Minor repair design → DOA holders can approve · Major repair design → only the Authority.' },
+  { t: 'talk', lines: [['M', "Trouble! A backyard shop has <b>approved its own major repair</b> and is trying to leave the island. Stop them!"]] },
+  { t: 'chase', veh: 'van', route: ['kNE', 'kE', 'kSE', 'kSW', 'kW', 'kNW', 'c2', 'b2S', 'b2N'], hits: 3, text: 'Stop the unapproved-repair van before it crosses the bridge! <b>Ram it 3 times.</b>', who: 'Self-approved repair' },
+  Q('Who can approve a MAJOR repair design?', 'Only the Authority', ['Any DOA holder', 'The aircraft operator'], 'Slide 87: major repair design can only be approved by the Authority.', 'Slide 87')
+] },
+/* ───── Compliance Key · D · Design Organisation Approval ───── */
+{ id: 'k3', c: 'D', island: 'key', topic: 'doa', name: 'Who Needs DOA?', cash: 800, steps: [
+  { t: 'talk', lines: [
+    ['D', "Victor Tan, Head of Design. My company holds <b>Design Organisation Approval – DOA</b>, SAR-21 Subpart G."],
+    ['D', "Anyone holding a <b>TC</b>, an <b>STC</b>, a <b>modification or repair approval</b>, or an <b>STSO</b> approval must obtain DOA.", 'doa1'],
+    ['D', "It's a small club. In Jan 2022 Singapore had <b>14</b> DOA organisations, <b>22</b> POA organisations and <b>450</b> SAR-145 maintenance organisations.", 'doa4']] },
+  { t: 'check', title: 'DOA required?', prompt: 'Which of these approval holders must obtain DOA? Select ALL that apply.',
+    items: [['Type Certificate holder', true], ['STC holder', true], ['Modification / repair approval holder', true], ['STSO approval holder', true], ['Air Operator Certificate holder', false], ['Private pilot licence holder', false]],
+    why: 'Slide 88: holders of TC, STC, modification/repair approval and STSO certificate of approval shall obtain DOA.' },
+  { t: 'choose', time: 70, text: 'How many organisations held <b>DOA</b> in Singapore (Jan 2022)?', opts: [
+    { loc: 'c4', label: '14', ok: true },
+    { loc: 'c5', label: '22', ok: false, why: '22 was the number of POA (production) organisations.' },
+    { loc: 'c6', label: '450', ok: false, why: '450 was the number of SAR-145 maintenance organisations.' }],
+    why: '14 design organisations held DOA.' },
+  Q('Which of these must obtain DOA?', 'An STSO approval holder', ['An airline ticket agent', 'A Certificate of Registration holder'], 'Slide 88.', 'Slide 88')
+] },
+{ id: 'k4', c: 'D', island: 'key', topic: 'doa', name: 'Design Signatory', cash: 1000, steps: [
+  { t: 'talk', lines: [
+    ['D', "What DOA lets us do: <b>develop design data</b>, issue a <b>statement of compliance</b> to airworthiness design standards, <b>approve minor changes</b> in design, and arrange <b>production</b> of the approved design with the Authority.", 'doa2'],
+    ['D', "But not just anyone signs. Only our <b>design signatories</b> can certify design data and issue statements of compliance.", 'doa3'],
+    ['D', "My list of privileges is scattered around the island, mixed up with things a DOA can NOT do. Collect only our privileges."]] },
+  { t: 'collect', blind: true, time: 120, text: 'Collect the <b>4 DOA privileges</b>. Leave what a DOA cannot do.', items: [
+    { loc: 'c1', label: 'Develop\ndesign data', ok: true },
+    { loc: 'c3', label: 'Issue a statement\nof compliance', ok: true },
+    { loc: 'c4', label: 'Approve a MINOR\ndesign change', ok: true },
+    { loc: 'c6', label: 'Arrange production\nof the approved design', ok: true },
+    { loc: 'c2', label: 'Approve a MAJOR\nrepair design', ok: false, why: 'Major repair designs can only be approved by the Authority.' },
+    { loc: 'c5', label: 'Issue an STC', ok: false, why: 'Only the Authority issues an STC – DOA holders develop the major change.' }] },
+  { t: 'choose', time: 70, text: 'New design data is ready. <b>Who certifies it?</b>', opts: [
+    { loc: 'doa1m', label: 'DESIGN SIGNATORY', ok: true },
+    { loc: 'doa2m', label: 'ANY ENGINEER\nin the DOA', ok: false, why: 'Only design signatories are authorised to certify design data.' },
+    { loc: 'doa3m', label: 'THE AIRCRAFT\nOPERATOR', ok: false, why: 'The operator does not certify design data – a DOA design signatory does.' }],
+    why: 'Only design signatories certify design data and issue statements of compliance.' },
+  Q('Which is a DOA privilege?', 'Approving minor changes in design', ['Approving major repair designs', 'Issuing Type Certificates'], 'Slide 88.', 'Slide 88')
+] },
+/* ───── Compliance Key · F · Production Organisation Approval ───── */
+{ id: 'k5', c: 'F', island: 'key', topic: 'poa', name: 'Licence to Build', cash: 800, steps: [
+  { t: 'talk', lines: [
+    ['F', "Grace Lee, POA Factory. Designing a part is one thing – <b>making</b> it is another."],
+    ['F', "An organisation that produces products or articles must hold <b>Production Organisation Approval – POA</b>, SAR-21 Subpart J – or a <b>letter of agreement for production without POA</b>.", 'poa1'],
+    ['F', "And a POA holder must <b>hold DOA</b>, or have an <b>arrangement with a DOA holder</b>.", 'poa2']] },
+  { t: 'choose', time: 70, text: 'A company wants to <b>manufacture</b> a new emergency beacon. What does it need?', opts: [
+    { loc: 'c4', label: 'POA\n(or a letter of agreement)', ok: true },
+    { loc: 'c5', label: 'AN AOC', ok: false, why: 'An AOC is for operating aircraft for public transport, not for manufacturing.' },
+    { loc: 'c6', label: 'NOTHING\nif DOA designed it', ok: false, why: 'Designing and producing are separate approvals – production needs POA or a letter of agreement.' }],
+    why: 'Producing articles needs POA, or a letter of agreement for production without POA.' },
+  { t: 'check', title: 'POA conditions', prompt: 'Which statements about a POA holder are true? Select ALL that apply.',
+    items: [['It holds DOA – or has an arrangement with a DOA holder', true], ['It may produce products and articles', true], ['It never needs design data', false], ['It can approve major repair designs', false]],
+    why: 'Slide 89: POA holders hold DOA or have an arrangement with one, and may produce products and articles.' },
+  Q('Without POA, how can an organisation still produce articles?', 'With a letter of agreement for production without POA', ['By holding an AOC', 'It cannot, under any circumstances'], 'Slide 89.', 'Slide 89')
+] },
+{ id: 'k6', c: 'F', island: 'key', topic: 'poa', name: 'Release Run', cash: 1000, steps: [
+  { t: 'talk', lines: [
+    ['F', "Our privilege: we <b>produce</b> products and articles and issue an <b>Authorised Release Certificate – CAAS(AW)95</b> for each article.", 'poa3'],
+    ['F', "Its New Parts block certifies the items were <b>manufactured in conformity to approved design data</b> and are in condition for safe operation.", 'poa4'],
+    ['F', "A batch of beacons is ready. Take it to the <b>Quality Release</b> office."]] },
+  { t: 'goto', loc: 'release', time: 80, text: 'Take the beacon batch to the <b>Quality Release</b> office.' },
+  { t: 'talk', lines: [['F', "Careful not to confuse us with distributors: a SAR-145 Subpart D <b>distributor</b> issues a <b>CAAS(AW)96</b> for new components it stores and re-issues.", 'poa5']] },
+  { t: 'sort', title: 'Which release certificate?', prompt: 'Which certificate goes with each part?', bins: ['CAAS(AW)95', 'CAAS(AW)96'],
+    items: [['Beacon batch produced in our POA factory', 0], ['New pump stored and re-issued by an approved distributor', 1], ['Seat belts manufactured by a POA holder', 0], ['New valve from the manufacturer, re-issued by an MD1-rated distributor', 1]],
+    why: 'POA holder → CAAS(AW)95 for articles it produces · Subpart D distributor → CAAS(AW)96 for new components it re-issues.' },
+  { t: 'talk', lines: [['F', "Alarm! A truck of <b>counterfeit parts with no CAAS(AW)95</b> is heading for the bridge!"]] },
+  { t: 'chase', veh: 'truck', route: ['kSW', 'kSE', 'kE', 'kNE', 'c2', 'b2S', 'b2N'], hits: 3, text: 'Stop the counterfeit-parts truck before it crosses the bridge! <b>Ram it 3 times.</b>', who: 'Counterfeit parts' },
+  Q('Which certificate does a POA holder issue for the articles it produces?', 'Authorised Release Certificate CAAS(AW)95', ['CAAS(AW)96', 'Certificate of Maintenance Review'], 'Slide 89.', 'Slide 89')
+] },
+/* ───── Compliance Key · A · Service Bulletins & Airworthiness Directives ───── */
+{ id: 'k7', c: 'A', island: 'key', topic: 'sbad', name: 'Bulletin Board', cash: 800, steps: [
+  { t: 'talk', lines: [
+    ['A', "Inspector Ravi, CAAS Continuing Airworthiness. Let's talk about <b>Service Bulletins</b> and <b>Airworthiness Directives</b>."],
+    ['A', "A <b>Service Bulletin – SB</b> – comes from the <b>TC holder, STC holder or component manufacturer</b>: design improvements, extra maintenance procedures or safety inspections.", 'sb1'],
+    ['A', "Implementing an SB is <b>optional</b> for operators…", 'sb2'],
+    ['A', "…but an <b>Airworthiness Directive – AD</b>, SAR Part 39, is issued or adopted by the Authority and <b>mandates</b> action to restore safety.", 'ad1'],
+    ['A', "And the CAA of the <b>State of Design</b> can make an SB mandatory by issuing an <b>AD that refers to it</b>.", 'sb3']] },
+  { t: 'choose', time: 70, text: '<b>Who issues Service Bulletins?</b>', opts: [
+    { loc: 'c1', label: 'TC / STC HOLDER\nor component manufacturer', ok: true },
+    { loc: 'c2', label: 'CAAS', ok: false, why: 'Authorities issue ADs. SBs come from the TC holder, STC holder or component manufacturer.' },
+    { loc: 'c3', label: 'THE AIRLINE', ok: false, why: 'Operators receive SBs – they do not issue them.' }],
+    why: 'SBs are issued by the TC holder, STC holder or the component manufacturer.' },
+  { t: 'sort', title: 'Optional or mandatory?', prompt: 'Must the operator do it?', bins: ['Optional', 'Mandatory'],
+    items: [['SB: improved cabin light fitting', 0], ['AD: inspect fuselage lap joints within 500 cycles', 1], ['SB that the State of Design mandated with an AD', 1], ['SB recommending an extra inspection', 0]],
+    why: 'SBs are optional · ADs are mandatory · an SB referred to by an AD becomes mandatory.' },
+  Q('An operator receives a Service Bulletin with no AD attached. Must it be done?', 'No – SB implementation is optional', ['Yes – all SBs are mandatory', 'Only if the captain agrees'], 'Slide 92: SB implementation by operators is optional.', 'Slide 92')
+] },
+{ id: 'k8', c: 'A', island: 'key', topic: 'sbad', name: 'Lap Joint', cash: 1200, steps: [
+  { t: 'talk', lines: [
+    ['A', "ADs that apply to Singapore-registered aircraft can be issued by <b>CAAS</b> or by the CAA of the <b>State of Design</b>.", 'ad2'],
+    ['A', "Under SAR 39, CAAS may issue an AD when it believes on reasonable grounds that an <b>unsafe condition</b> exists and is likely in other aircraft of the <b>same design</b>.", 'ad5'],
+    ['A', "In the US, FAA ADs are <b>legally enforceable</b> rules under 14 CFR Part 39 – and urgent ones are <b>Emergency ADs</b>.", 'ad6'],
+    ['A', "Real case: on <b>1 April 2011</b> a B737-300 made an emergency landing after the <b>fuselage rivet lap joints</b> failed from fatigue in flight. Boeing issued an <b>SB two days later</b>; the FAA issued an <b>Emergency AD four days later</b>.", 'ad4'],
+    ['A', "Our own B737-300, <b>9V-VBF</b>, is parked here. The AD applies to it. Go and look."]] },
+  { t: 'goto', loc: 'b737', time: 80, text: 'Go to <b>9V-VBF</b> (B737-300) on the south apron.' },
+  { t: 'check', title: 'AD due on 9V-VBF', prompt: 'The lap-joint AD applies to 9V-VBF. Before it flies, which must be true? Select ALL that apply.',
+    items: [['The AD has been complied with (or an approved alternative means of compliance)', true], ['It was done within the AD\'s compliance time', true], ['Nothing – ADs are optional like SBs', false], ['It can fly now and be inspected next month, after the deadline', false]],
+    why: 'Slide 93: no aircraft shall fly unless it complies with each applicable AD or alternate means of compliance within the compliance timeframe.' },
+  { t: 'talk', lines: [['A', "The operator is towing 9V-VBF out <b>without complying</b> with the AD! Stop that tug!", 'ad3']] },
+  { t: 'chase', veh: 'tug', route: ['c5', 'kSW', 'kW', 'kNW', 'c2', 'b2S', 'b2N'], hits: 3, text: 'Stop the tug before the non-compliant aircraft leaves the island! <b>Ram it 3 times.</b>', who: 'Non-compliant tow' },
+  Q('In the 2011 B737 lap-joint case, what came four days after the event?', 'An FAA Emergency AD mandating inspections', ['A Boeing Service Bulletin', 'A new Type Certificate'], 'Slide 96: Boeing SB after 2 days; FAA Emergency AD after 4 days.', 'Slide 96')
 ] }
 ];
 
@@ -362,6 +523,27 @@ const DEXAM = [
   Q('Who must obtain Design Organisation Approval?', 'Holders of a TC, STC, mod/repair approval or STSO', ['Every airline pilot', 'Only aircraft owners'], 'Slide 88.', 'Slide 88'),
   Q('Within a DOA company, who certifies design data?', 'Only design signatories', ['Any employee', 'The accountable manager\'s secretary'], 'Slide 88.', 'Slide 88'),
   Q('A POA holder issues which certificate for articles it produces?', 'Authorised Release Certificate CAAS(AW)95', ['Type Certificate', 'Certificate of Maintenance Review'], 'Slide 89.', 'Slide 89')
+];
+
+/* Compliance Key: Compliance Board exam */
+const CEXAM = [
+  Q('Which manuals contain approved repair procedures?', 'The SRM and the AMM', ['The Tech Log and the CMR', 'The MEL and the AOC'], 'Slide 87.', 'Slide 87'),
+  Q('A repair not stated in the manuals is…', 'A repair design that needs approval', ['Always forbidden', 'Automatically approved'], 'Slide 87.', 'Slide 87'),
+  Q('A minor repair design can be approved by…', 'A DOA holder', ['Only the State of Design', 'The pilot-in-command'], 'Slide 87.', 'Slide 87'),
+  Q('A major repair design can be approved by…', 'Only the Authority', ['Any DOA holder', 'The operator'], 'Slide 87.', 'Slide 87'),
+  Q('Which approval holder must obtain DOA?', 'A modification/repair approval holder', ['An AOC holder', 'A passenger'], 'Slide 88.', 'Slide 88'),
+  Q('Which is NOT a DOA privilege?', 'Approving major repair designs', ['Developing design data', 'Approving minor changes in design'], 'Slide 88.', 'Slide 88'),
+  Q('Who certifies design data in a DOA?', 'Only design signatories', ['Every employee', 'The marketing manager'], 'Slide 88.', 'Slide 88'),
+  Q('How many DOA organisations were there in Singapore in Jan 2022?', '14', ['22', '450'], 'Slide 115.', 'Slide 115'),
+  Q('Producing articles requires…', 'POA, or a letter of agreement for production without POA', ['An AOC', 'Nothing'], 'Slide 89.', 'Slide 89'),
+  Q('A POA holder must…', 'Hold DOA or have an arrangement with a DOA holder', ['Hold an AOC', 'Be a SAR-147 school'], 'Slide 89.', 'Slide 89'),
+  Q('A POA holder issues which certificate for its articles?', 'CAAS(AW)95', ['CAAS(AW)96', 'C of A'], 'Slide 89.', 'Slide 89'),
+  Q('Who issues Service Bulletins?', 'TC holders, STC holders or component manufacturers', ['CAAS', 'The airline'], 'Slide 92.', 'Slide 92'),
+  Q('Implementing an SB is…', 'Optional for operators', ['Always mandatory', 'Forbidden'], 'Slide 92.', 'Slide 92'),
+  Q('How can an SB become mandatory?', 'The State of Design issues an AD referring to it', ['The operator likes it', 'It turns 2 years old'], 'Slide 92.', 'Slide 92'),
+  Q('ADs effective on Singapore aircraft can be issued by…', 'CAAS or the CAA of the State of Design', ['Only the manufacturer', 'Only the airline'], 'Slide 93.', 'Slide 93'),
+  Q('An aircraft has an applicable AD past its compliance time. Can it fly?', 'No', ['Yes, ADs are optional', 'Yes, if the SB is filed'], 'Slide 93.', 'Slide 93'),
+  Q('In the 2011 B737-300 case, the failure was in…', 'Fuselage rivet lap joints (fatigue)', ['The landing gear', 'An engine fan blade'], 'Slide 96.', 'Slide 96')
 ];
 
 /* Final Licence Board exam + Records Desk question bank */

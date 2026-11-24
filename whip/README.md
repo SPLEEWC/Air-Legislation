@@ -24,6 +24,14 @@ East of Vista Bay, across a bridge (or fly there by plane or helicopter), **Desi
 - **P – Priya Nair, STSO Parts Plant**: STSO approval for articles installed on aircraft, DOA or design configuration control, POA and CAAS(AW)95, and data kept for 2 years after production stops.
 - Six missions (sequencing, blind collect, sort, chases off the island), four more hidden logbook pages, and a **Design Board** exam with its own certificate once all six are done. The island's missions are available from the start.
 
+## Compliance Key (third island)
+South of Design Cay, across a second bridge (or by air), **Compliance Key** covers slides 87–96, 115 and 132–134:
+- **M – Hana Yusof, Repair Design Office**: approved procedures in the SRM/AMM, when a repair becomes a repair design, minor repair designs approved by DOA holders vs major ones only by the Authority.
+- **D – Victor Tan, DOA Design House**: who must hold DOA, DOA privileges, design signatories, and Singapore's DOA/POA/SAR-145 numbers.
+- **F – Grace Lee, POA Factory**: POA or a letter of agreement for production, the DOA link, CAAS(AW)95 (vs a distributor's CAAS(AW)96).
+- **A – Inspector Ravi, SB/AD Bulletin Centre**: who issues Service Bulletins (optional), Airworthiness Directives (mandatory, SAR Part 39), how an AD can mandate an SB, and the 2011 B737-300 lap-joint case study with the parked 9V-VBF.
+- Eight missions, four more hidden logbook pages, and a **Compliance Board** exam with its own certificate once all eight are done. Available from the start.
+
 ## Graphics
 - Day–night cycle (one game hour every 30 seconds) with a sunset sky, stars, lit windows, street lamps and headlights at night; the clock is under your cash.
 - Real-time shadows, glossy reflective car paint and glass, animated sea, tyre smoke and skid marks, crash dust, curbs, crossings, shop fronts and rooftop billboards.
